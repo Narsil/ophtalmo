@@ -23,7 +23,7 @@ import {Camera} from 'expo-camera';
 import * as VideoThumbnails from 'expo-video-thumbnails';
 import {store, addMedia} from './state';
 import {ListItem} from './listitem';
-import {Svg, Defs, Rect, Mask, Circle} from 'react-native-svg';
+import {Path, Svg, Defs, Rect, Mask, Circle, G} from 'react-native-svg';
 
 function fileSize(size: number): string {
   var i = -1;
@@ -48,45 +48,46 @@ const storeVideo = async (uri: string, filename: string): Promise<Media> => {
   };
   return media;
 };
-
 interface SvgMaskProps {
   width: number;
   height: number;
 }
 const SvgMask = (props: SvgMaskProps) => {
   const {width, height} = props;
+  const w = width + 1;
+  const h = height;
+  const path = `M 0 0 L 0 ${h} L ${w} ${h} L ${w} 0Z`;
+  console.log(w, h);
 
   return (
-    <Svg height={height} width={width} viewBox={`0 0 ${width} ${height}`}>
+    <Svg height="100%" width="100%" viewBox={`0 0 ${w} ${h}`}>
       <Defs>
-        <Mask id="mask" x="0" y="0" height="100%" width="100%">
-          <Rect height="100%" width="100%" fill="#fff" />
-          <Circle r={width / 2 - 5} cx={width / 2} cy={width / 2} />
+        <Mask id="mask">
+          <Path d={path} fill="#fff" />
+          <Circle r={`${w / 2}`} cx={`${w / 2}`} cy={`${w / 2}`} />
         </Mask>
       </Defs>
-      <Rect height="100%" width="100%" fill="#000" mask="url(#mask)" />
+      <Path d={path} fill="black" mask="url(#mask)" />
+      <Path
+        d={`M 0 ${w} L ${w} ${w} L ${w} ${h + 200} L 0 ${h + 200}Z`}
+        fill="black"
+      />
     </Svg>
   );
 };
 
 const CircleMask = () => {
-  const [width, setWidth] = useState<number | null>(null);
-  const [height, setHeight] = useState<number | null>(null);
-
+  const [w, setW] = useState(null);
+  const [h, setH] = useState(null);
   return (
     <View
+      style={StyleSheet.absoluteFill}
       onLayout={event => {
-        const {width, height} = event.nativeEvent.layout;
-        setWidth(width);
-        setHeight(height);
-      }}
-      style={[
-        StyleSheet.absoluteFill,
-        {
-          backgroundColor: 'transparent',
-        },
-      ]}>
-      {width && height && <SvgMask width={width} height={height} />}
+        const {height, width} = event.nativeEvent.layout;
+        setW(width);
+        setH(height);
+      }}>
+      {h && w && <SvgMask height={h} width={w} />}
     </View>
   );
 };
@@ -128,129 +129,123 @@ function AddVideoComponent(props: AddVideoProps) {
     const camera = React.createRef<Camera>();
     return (
       <View style={{flex: 1}}>
-        <CircleMask />
         <Camera
           style={{flex: 1}}
           type={type}
           ref={camera}
           flashMode={flash}
-          autoFocus={Camera.Constants.AutoFocus.on}>
-          <View
-            style={{
-              flex: 1,
-              flexDirection: 'row',
-            }}>
-            <TouchableOpacity
-              style={{
-                position: 'absolute',
-                right: 10,
-                bottom: 50,
-                alignItems: 'center',
-              }}
-              onPress={() => {
-                setFlash(
-                  flash == Camera.Constants.FlashMode.torch
-                    ? Camera.Constants.FlashMode.off
-                    : Camera.Constants.FlashMode.torch,
-                );
-              }}>
-              <Icon
-                reverse
-                name={
-                  flash == Camera.Constants.FlashMode.torch
-                    ? 'flash-on'
-                    : 'flash-off'
-                }
-                type="material"
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={{
-                position: 'absolute',
-                left: 10,
-                bottom: 50,
-                alignItems: 'center',
-              }}
-              onPress={() => {
-                setType(
-                  type == Camera.Constants.Type.back
-                    ? Camera.Constants.Type.front
-                    : Camera.Constants.FlashMode.back,
-                );
-              }}>
-              <Icon reverse name="camera-switch" type="material-community" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={{
-                position: 'absolute',
-                right: 100,
-                left: 100,
-                bottom: 50,
-                alignItems: 'center',
-              }}
-              onPress={() => {
-                if (status !== 'RECORDING') {
-                  setStatus('RECORDING');
-                  // Fixing bug https://github.com/expo/expo/issues/6086
-                  if (
-                    Platform.OS === 'ios' &&
-                    flash == Camera.Constants.FlashMode.torch
-                  ) {
-                    setTimeout(() => {
-                      setFlash(Camera.Constants.FlashMode.off);
-                      setFlash(Camera.Constants.FlashMode.torch);
-                    }, 1000);
-                  }
-                  camera.current.recordAsync({maxDuration: 30}).then(video => {
-                    setStatus('SAVING');
-                    const timestamp = new Date();
-                    const filename = `${timestamp
-                      .toISOString()
-                      .replace(/:/g, '')
-                      .replace(/\./g, '-')}.${extension}`;
-                    const directory = `${FileSystem.documentDirectory}${patient.id}/media/`;
-                    const uri = `${directory}${filename}`;
-                    FileSystem.makeDirectoryAsync(directory, {
-                      intermediates: true,
-                    }).then(() => {
-                      FileSystem.copyAsync({from: video.uri, to: uri})
-                        .then(() => {
-                          storeVideo(uri, filename).then(media => {
-                            setStatus('STILL');
-                            addMedia(patient, media);
-                            navigation.goBack();
-                          });
-                        })
-                        .catch(err => {
-                          console.error(`Error copying video. ${err}`);
-                        });
+          autoFocus={Camera.Constants.AutoFocus.on}
+        />
+        <CircleMask />
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            right: 10,
+            bottom: 50,
+            alignItems: 'center',
+          }}
+          onPress={() => {
+            setFlash(
+              flash == Camera.Constants.FlashMode.torch
+                ? Camera.Constants.FlashMode.off
+                : Camera.Constants.FlashMode.torch,
+            );
+          }}>
+          <Icon
+            reverse
+            name={
+              flash == Camera.Constants.FlashMode.torch
+                ? 'flash-on'
+                : 'flash-off'
+            }
+            type="material"
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            left: 10,
+            bottom: 50,
+            alignItems: 'center',
+          }}
+          onPress={() => {
+            setType(
+              type == Camera.Constants.Type.back
+                ? Camera.Constants.Type.front
+                : Camera.Constants.FlashMode.back,
+            );
+          }}>
+          <Icon reverse name="camera-switch" type="material-community" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            right: 100,
+            left: 100,
+            bottom: 50,
+            alignItems: 'center',
+          }}
+          onPress={() => {
+            if (status !== 'RECORDING') {
+              setStatus('RECORDING');
+              // Fixing bug https://github.com/expo/expo/issues/6086
+              if (
+                Platform.OS === 'ios' &&
+                flash == Camera.Constants.FlashMode.torch
+              ) {
+                setTimeout(() => {
+                  setFlash(Camera.Constants.FlashMode.off);
+                  setFlash(Camera.Constants.FlashMode.torch);
+                }, 1000);
+              }
+              camera.current.recordAsync({maxDuration: 30}).then(video => {
+                setStatus('SAVING');
+                const timestamp = new Date();
+                const filename = `${timestamp
+                  .toISOString()
+                  .replace(/:/g, '')
+                  .replace(/\./g, '-')}.${extension}`;
+                const directory = `${FileSystem.documentDirectory}${patient.id}/media/`;
+                const uri = `${directory}${filename}`;
+                FileSystem.makeDirectoryAsync(directory, {
+                  intermediates: true,
+                }).then(() => {
+                  FileSystem.copyAsync({from: video.uri, to: uri})
+                    .then(() => {
+                      storeVideo(uri, filename).then(media => {
+                        setStatus('STILL');
+                        addMedia(patient, media);
+                        navigation.goBack();
+                      });
+                    })
+                    .catch(err => {
+                      console.error(`Error copying video. ${err}`);
                     });
-                  });
-                } else {
-                  camera.current.stopRecording();
-                }
-              }}>
-              {status === 'SAVING' ? (
-                <Icon
-                  size={40}
-                  reverse
-                  name="dots-three-horizontal"
-                  type="entypo"
-                />
-              ) : status === 'RECORDING' ? (
-                <Icon size={40} reverse name="stop" type="foundation" />
-              ) : (
-                <Icon
-                  size={40}
-                  reverse
-                  name="record"
-                  type="foundation"
-                  color="#c00"
-                />
-              )}
-            </TouchableOpacity>
-          </View>
-        </Camera>
+                });
+              });
+            } else {
+              camera.current.stopRecording();
+            }
+          }}>
+          {status === 'SAVING' ? (
+            <Icon
+              size={40}
+              reverse
+              name="dots-three-horizontal"
+              type="entypo"
+            />
+          ) : status === 'RECORDING' ? (
+            <Icon size={40} reverse name="stop" type="foundation" />
+          ) : (
+            <Icon
+              size={40}
+              reverse
+              name="record"
+              type="foundation"
+              color="#c00"
+            />
+          )}
+        </TouchableOpacity>
       </View>
     );
   }
