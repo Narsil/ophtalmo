@@ -1,8 +1,15 @@
 import React from 'react';
-import {Platform, Image} from 'react-native';
-import {Video} from 'expo-av';
+import {ImageProps, Platform, Image } from 'react-native';
+import {Video } from 'expo-av';
 
-export const Thumbnail = props => {
+interface Source {
+    uri : string
+}
+
+
+type ThumbnailProps = ImageProps;
+
+export const Thumbnail = (props: any) => {
   if (Platform.OS === 'ios') {
     return <Video {...props} resizeMode="cover" />;
   } else {

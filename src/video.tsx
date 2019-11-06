@@ -21,7 +21,7 @@ import {StackActions} from 'react-navigation';
 import * as Permissions from 'expo-permissions';
 import {Camera} from 'expo-camera';
 import * as VideoThumbnails from 'expo-video-thumbnails';
-import {store, addMedia} from './state';
+import {FullState, getPatient, store, addMedia} from './state';
 import {ListItem} from './listitem';
 import {Path, Svg, Defs, Rect, Mask, Circle, G} from 'react-native-svg';
 
@@ -37,13 +37,13 @@ function fileSize(size: number): string {
 }
 
 const storeVideo = async (uri: string, filename: string): Promise<Media> => {
-  const {size} = await FileSystem.getInfoAsync(uri);
+  const info = await FileSystem.getInfoAsync(uri);
+  const size = (info.size !== undefined)?info.size:0
 
   const media: Media = {
     filename: filename,
     uri: uri,
     timestamp: new Date(),
-    thumbnailUri: null,
     size,
   };
   return media;
@@ -77,8 +77,8 @@ const SvgMask = (props: SvgMaskProps) => {
 };
 
 const CircleMask = () => {
-  const [w, setW] = useState(null);
-  const [h, setH] = useState(null);
+  const [w, setW] = useState<null|number>(null);
+  const [h, setH] = useState<null|number>(null);
   return (
     <View
       style={StyleSheet.absoluteFill}
@@ -98,8 +98,8 @@ interface AddVideoProps {
 }
 function AddVideoComponent(props: AddVideoProps) {
   const {patient, addMedia} = props;
-  const [hasCameraPermission, setCameraPermission] = useState(null);
-  const [hasVideoPermission, setVideoPermission] = useState(null);
+  const [hasCameraPermission, setCameraPermission] = useState<boolean|null>(null);
+  const [hasVideoPermission, setVideoPermission] = useState<boolean|null>(null);
   const [flash, setFlash] = useState(Camera.Constants.FlashMode.torch);
   const [type, setType] = useState(Camera.Constants.Type.back);
   const [status, setStatus] = useState<'STILL' | 'RECORDING' | 'SAVING'>(
@@ -198,7 +198,7 @@ function AddVideoComponent(props: AddVideoProps) {
                   setFlash(Camera.Constants.FlashMode.torch);
                 }, 1000);
               }
-              camera.current.recordAsync({maxDuration: 30}).then(video => {
+              camera.current!.recordAsync({maxDuration: 30}).then(video => {
                 setStatus('SAVING');
                 const timestamp = new Date();
                 const filename = `${timestamp
@@ -224,7 +224,7 @@ function AddVideoComponent(props: AddVideoProps) {
                 });
               });
             } else {
-              camera.current.stopRecording();
+              camera.current!.stopRecording();
             }
           }}>
           {status === 'SAVING' ? (
@@ -251,15 +251,15 @@ function AddVideoComponent(props: AddVideoProps) {
   }
 }
 export const AddVideo = connect(
-  state => {
+  (state: FullState) => {
     return {
-      patient: state.state.patients.get(state.state.patientId),
+      patient: getPatient(state),
     };
   },
   {addMedia},
 )(AddVideoComponent);
 
-AddVideo.navigationOptions = ({navigation}) => {
+AddVideoComponent.navigationOptions = () => {
   return {title: "Vidéo de l'oeil"};
 };
 

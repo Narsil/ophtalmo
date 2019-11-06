@@ -15,9 +15,10 @@ import {
 } from 'react-native';
 import {StackActions} from 'react-navigation';
 import {useNavigation, useNavigationParam} from 'react-navigation-hooks';
+// @ts-ignore
 import ExpoPixi from 'expo-pixi';
 import {useState, useEffect} from 'react';
-import {store, addConsent} from './state';
+import {FullState, getPatient, store, addConsent} from './state';
 
 function save(canvas: any, uri: string) {
   const promise = new Promise<string>(function(resolve, reject) {
@@ -27,7 +28,7 @@ function save(canvas: any, uri: string) {
         quality: 0.5,
         result: 'file',
       })
-      .then(result => {
+      .then((result: {uri : string}) => {
         FileSystem.copyAsync({from: result.uri, to: uri}).then(() => {
           resolve(uri);
         });
@@ -128,26 +129,14 @@ function ConsentComponent(props: ConsentProps) {
   );
 }
 export const Consent = connect(
-  state => {
-    const patient = state.state.patients.get(state.state.patientId);
-    if (!patient) {
-      throw new Error('No patient selected');
-    }
+  (state:FullState) => {
+    const patient = getPatient(state);
     return {patient};
   },
   {addConsent},
 )(ConsentComponent);
 
-export const Title = connect(
-  state => {
-    return {patient: state.state.patients.get(state.state.patientId, null)};
-  },
-  {addConsent},
-)(props => {
-  return `Patient ${props.patient.id}`;
-});
-
-Consent.navigationOptions = ({navigation}) => {
+ConsentComponent.navigationOptions = () => {
   return {
     title: `Consentement`,
   };

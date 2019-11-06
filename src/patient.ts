@@ -65,7 +65,6 @@ export class Patient {
 export interface Media {
   uri: string;
   filename: string;
-  thumbnailUri: string;
   timestamp: Date;
   size: number;
 }
@@ -81,7 +80,9 @@ export async function loadPatient(patientId: string): Promise<Patient> {
   const filenames = await FileSystem.readDirectoryAsync(directory);
   const info = await FileSystem.getInfoAsync(directory);
 
-  patient.created = new Date(info.modificationTime * 1000);
+    if (info.modificationTime !== undefined){
+      patient.created = new Date(info.modificationTime * 1000);
+    }
 
   if (filenames.indexOf(consentFilename) !== -1) {
     patient.consentUri = consentUri(patient);
@@ -99,21 +100,20 @@ export async function loadPatient(patientId: string): Promise<Patient> {
     const mediaFilenames = await FileSystem.readDirectoryAsync(mediaDirectory);
     for (const filename of mediaFilenames) {
       if (filename.endsWith('.mp4') || filename.endsWith('.mov')) {
-        const thumbnailFilename = filename.slice(filename.length - 4) + '.jpg';
-        const thumbnailUri =
-          mediaFilenames.indexOf(thumbnailFilename) !== -1
-            ? mediaDirectory + '/' + thumbnailFilename
-            : null;
         const uri = `${mediaDirectory}/${filename}`;
         const info = await FileSystem.getInfoAsync(uri);
-        const media = {
-          filename: filename,
-          uri: uri,
-          thumbnailUri: thumbnailUri,
-          timestamp: new Date(info.modificationTime),
-          size: info.size,
-        };
-        patient.media.push(media);
+
+
+        if (info.modificationTime !== undefined){
+            const timestamp = new Date(info.modificationTime)
+            const media = {
+              filename: filename,
+              uri: uri,
+              timestamp: timestamp,
+              size: info.size,
+            };
+            patient.media.push(media);
+        }
       }
     }
   }

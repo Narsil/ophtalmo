@@ -37,7 +37,7 @@ export function Patients(props: PatientProps) {
       <AppLoading
         startAsync={() => {
           return FileSystem.readDirectoryAsync(
-            FileSystem.documentDirectory,
+            FileSystem.documentDirectory!,
           ).then(patientIds => {
             Promise.all(patientIds.map(loadPatient)).then(patients => {
               setReady(
@@ -55,8 +55,8 @@ export function Patients(props: PatientProps) {
   }
 
   const {navigate} = useNavigation();
-  const renderItem = ({item}) => {
-    const patient: Patient = item;
+  const renderItem = ({item}: {item : Patient}) => {
+    const patient= item;
     return (
       <ListItem
         title={patient.toString()}
@@ -108,7 +108,7 @@ export function Patients(props: PatientProps) {
   };
   return (
     <Container>
-      <FlatList
+      <FlatList<Patient>
         data={Array.from(patients.values())
           .filter(patient => patient.hasConsent())
           .sort((a, b) => b.id - a.id)}
@@ -118,7 +118,7 @@ export function Patients(props: PatientProps) {
     </Container>
   );
 }
-Patients.navigationOptions = ({navigation}) => {
+Patients.navigationOptions = () => {
   return {
     headerTitle: 'Patients',
     headerRight: () => <CAddPatientButton />,
@@ -126,13 +126,18 @@ Patients.navigationOptions = ({navigation}) => {
 };
 
 export default connect(
-  state => {
+  (state: FullState) => {
     return {patients: state.state.patients, ready: state.state.ready};
   },
   {setReady, navigatePatient},
 )(Patients);
 
-const AddPatientButton = props => {
+interface AddPatientButtonProps {
+    newPatientId : number
+    addPatient: typeof addPatient
+}
+
+const AddPatientButton = (props: AddPatientButtonProps) => {
   const {navigate} = useNavigation();
   const {addPatient} = props;
   return (

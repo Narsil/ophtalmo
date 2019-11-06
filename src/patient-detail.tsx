@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
+import {NavigationParams} from "react-navigation";
 import {Video} from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import {Icon} from 'react-native-elements';
@@ -19,6 +20,7 @@ import {connect} from 'react-redux';
 
 import {Media, Pathology, Patient} from './patient';
 import {Thumbnail} from './thumbnail';
+import {FullState, getPatient} from "./state";
 
 interface PatientDetailProps {
   patient: Patient;
@@ -38,7 +40,6 @@ export function PatientDetailComponent(props: PatientDetailProps) {
   const emptyMedia: Media = {
     uri: '+',
     filename: '',
-    thumbnailUri: '',
     timestamp: new Date(),
     size: 0,
   };
@@ -120,12 +121,12 @@ export function PatientDetailComponent(props: PatientDetailProps) {
     </View>
   );
 }
-export const PatientDetail = connect((state, props) => {
-  const patient = state.state.patients.get(state.state.patientId);
+export const PatientDetail = connect((state: FullState) => {
+  const patient = getPatient(state);
   return {patient};
 })(PatientDetailComponent);
 
-PatientDetail.navigationOptions = ({navigation}) => {
+PatientDetailComponent.navigationOptions = ({navigation}: NavigationParams) => {
   return {
     headerTitle: `Patient`,
     headerRight: () => {

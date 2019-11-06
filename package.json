@@ -8,6 +8,7 @@
     "eject": "expo eject"
   },
   "dependencies": {
+    "@types/react-redux": "^7.1.5",
     "expo": "^35.0.0",
     "expo-av": "~7.0.0",
     "expo-camera": "~7.0.0",
@@ -37,7 +38,7 @@
     "@types/react": "^16.8.23",
     "@types/react-native": "^0.57.65",
     "babel-preset-expo": "^7.1.0",
-    "typescript": "^3.6.3"
+    "typescript": "^3.7.2"
   },
   "private": true
 }

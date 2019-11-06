@@ -12,10 +12,11 @@ import {
   TouchableOpacity,
   Switch,
 } from 'react-native';
+import {NavigationParams} from "react-navigation";
 import {connect} from 'react-redux';
 import {useNavigationParam} from 'react-navigation-hooks';
 import {useState, useEffect} from 'react';
-import {store, addPathology} from './state';
+import {FullState, getPatient, store, addPathology} from './state';
 
 async function writePathology(pathology: Pathology, filename: string) {
   FileSystem.writeAsStringAsync(filename, JSON.stringify(pathology));
@@ -27,8 +28,8 @@ interface PathologyProps {
 }
 function PathologyComponent(props: PathologyProps) {
   const {addPathology, patient} = props;
-  const pathology: string = patient.pathology && patient.pathology.pathology;
-  const hasUlcer: boolean = patient.pathology && patient.pathology.hasUlcer;
+  const pathology: string = patient.pathology && patient.pathology.pathology || '';
+  const hasUlcer: boolean = patient.pathology && patient.pathology.hasUlcer || false;
   const filename = pathologyUri(patient);
 
   const data = [
@@ -123,7 +124,7 @@ function PathologyComponent(props: PathologyProps) {
     </View>
   );
 }
-PathologyComponent.navigationOptions = ({navigation}) => {
+PathologyComponent.navigationOptions = ({navigation}: NavigationParams) => {
   return {
     headerTitle: 'Pathologie',
     headerRight: () => {
@@ -146,9 +147,9 @@ PathologyComponent.navigationOptions = ({navigation}) => {
 };
 
 export const PathologyDetail = connect(
-  state => {
+  (state: FullState) => {
     return {
-      patient: state.state.patients.get(state.state.patientId),
+      patient: getPatient(state)
     };
   },
   {addPathology},
