@@ -116,8 +116,8 @@ interface PathologyAction extends BasePatientAction{
 type PatientAction = MediaAction | ConsentAction | PathologyAction;
 type Action = PatientAction | PatientsAction | NavigateAction | NewPatientAction;
 
-function assertUnreachable(x: never): never {
-  throw new Error("Didn't expect to get here");
+function assertUnreachable(x: never): void {
+    // throw new Error("Didn't expect to get here");
 }
 
 
@@ -134,7 +134,7 @@ const patientReducer = (patient: Patient, action: PatientAction): Patient => {
       newPatient.pathology = action.pathology;
       return newPatient;
   }
-  return assertUnreachable(action);
+  assertUnreachable(action);
 };
 
 const mainReducer = (state: State = INITIAL_STATE, action: Action): State => {
@@ -171,7 +171,9 @@ const mainReducer = (state: State = INITIAL_STATE, action: Action): State => {
       newPatients.set(newPatient.id, newPatient);
       return {...state, patients: newPatients};
   }
-  return assertUnreachable(action);
+  assertUnreachable(action);
+  // Actually Here actions might be native redux actions.
+  return state;
 };
 
 export const reducer = combineReducers({
