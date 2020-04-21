@@ -1,5 +1,11 @@
 import * as FileSystem from 'expo-file-system';
 
+export interface PatientsState {
+  ready: boolean;
+  patients: Map<number, Patient>;
+  patientId: null | number;
+}
+
 const consentFilename = 'consent.png';
 export function consentUri(patient: Patient): string {
   const uri = FileSystem.documentDirectory + `${patient.id}/${consentFilename}`;
@@ -9,14 +15,6 @@ export function consentUri(patient: Patient): string {
 const pathologyFilename = 'pathology.json';
 export function pathologyUri(patient: Patient): string {
   return FileSystem.documentDirectory + `${patient.id}/${pathologyFilename}`;
-}
-export function copyPatient(other: Patient) {
-  const patient = new Patient(other.id);
-  patient.id = other.id;
-  patient.media = other.media.slice(0);
-  patient.consentUri = other.consentUri;
-  patient.pathology = other.pathology ? {...other.pathology} : null;
-  return patient;
 }
 
 const isToday = (someDate: Date): boolean => {
@@ -80,9 +78,9 @@ export async function loadPatient(patientId: string): Promise<Patient> {
   const filenames = await FileSystem.readDirectoryAsync(directory);
   const info = await FileSystem.getInfoAsync(directory);
 
-    if (info.modificationTime !== undefined){
-      patient.created = new Date(info.modificationTime * 1000);
-    }
+  if (info.modificationTime !== undefined) {
+    patient.created = new Date(info.modificationTime * 1000);
+  }
 
   if (filenames.indexOf(consentFilename) !== -1) {
     patient.consentUri = consentUri(patient);
@@ -103,16 +101,15 @@ export async function loadPatient(patientId: string): Promise<Patient> {
         const uri = `${mediaDirectory}/${filename}`;
         const info = await FileSystem.getInfoAsync(uri);
 
-
-        if (info.modificationTime !== undefined){
-            const timestamp = new Date(info.modificationTime)
-            const media = {
-              filename: filename,
-              uri: uri,
-              timestamp: timestamp,
-              size: info.size,
-            };
-            patient.media.push(media);
+        if (info.modificationTime !== undefined) {
+          const timestamp = new Date(info.modificationTime);
+          const media = {
+            filename: filename,
+            uri: uri,
+            timestamp: timestamp,
+            size: info.size,
+          };
+          patient.media.push(media);
         }
       }
     }
@@ -120,3 +117,57 @@ export async function loadPatient(patientId: string): Promise<Patient> {
 
   return patient;
 }
+
+export const ADD_CONSENT = 'ADD_CONSENT';
+export const ADD_MEDIA = 'ADD_MEDIA';
+export const ADD_PATHOLOGY = 'ADD_PATHOLOGY';
+export const ADD_PATIENT = 'ADD_PATIENT';
+export const SET_READY = 'SET_READY';
+export const NAVIGATE_PATIENT = 'NAVIGATE_PATIENT';
+
+interface PatientsReadyAction {
+  type: typeof SET_READY;
+  patients: Map<number, Patient>;
+}
+
+interface AddPatientAction {
+  type: typeof ADD_PATIENT;
+  patient: Patient;
+}
+
+interface NavigateAction {
+  type: typeof NAVIGATE_PATIENT;
+  patient: Patient;
+}
+
+interface BasePatientAction {
+  patient: Patient;
+}
+interface MediaAction extends BasePatientAction {
+  type: typeof ADD_MEDIA;
+  media: Media;
+}
+interface ConsentAction extends BasePatientAction {
+  type: typeof ADD_CONSENT;
+  uri: string;
+}
+interface PathologyAction extends BasePatientAction {
+  type: typeof ADD_PATHOLOGY;
+  pathology: Pathology;
+}
+interface AddConsentAction extends BasePatientAction {
+  type: typeof ADD_CONSENT;
+  uri: string;
+}
+
+export type PatientActionType =
+  | AddConsentAction
+  | MediaAction
+  | ConsentAction
+  | PathologyAction;
+
+export type PatientsActionType =
+  | PatientActionType
+  | PatientsReadyAction
+  | AddPatientAction
+  | NavigateAction;

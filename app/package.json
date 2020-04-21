@@ -16,6 +16,7 @@
     "expo-file-system": "~7.0.0",
     "expo-gl": "~7.0.0",
     "expo-pixi": "^1.2.0",
+    "expo-task-manager": "~7.0.0",
     "expo-video-thumbnails": "~3.0.0",
     "native-base": "2.13.8",
     "react": "16.8.3",
@@ -32,7 +33,7 @@
     "react-navigation-hooks": "^1.1.0",
     "react-navigation-stack": "^1.10.3",
     "react-redux": "^7.1.1",
-    "redux": "^4.0.4",
+    "redux": "^4.0.5",
     "redux-thunk": "^2.3.0",
     "remove": "^0.1.5"
   },

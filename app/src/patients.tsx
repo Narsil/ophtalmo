@@ -1,5 +1,5 @@
 import React from 'react';
-import {Patient, loadPatient} from './patient';
+import {Patient, loadPatient} from './store/patients/types';
 import {AppLoading} from 'expo';
 import * as FileSystem from 'expo-file-system';
 import {useNavigation, useNavigationParam} from 'react-navigation-hooks';
@@ -7,22 +7,11 @@ import {Button, Text, FlatList, StyleSheet, View} from 'react-native';
 import {Icon} from 'react-native-elements';
 import {ListItem} from './listitem';
 import {Container} from 'native-base';
-import {
-  store,
-  addPatient,
-  setReady,
-  FullState,
-  State,
-  navigatePatient,
-} from './state';
+import {RootState} from './store';
+import {addPatient, setReady, navigatePatient} from './store/patients/actions';
 import {Thumbnail} from './thumbnail';
 import {connect} from 'react-redux';
 
-// export function Patients(
-//   ready: boolean,
-//   patients: Patient[],
-//   setReady: (patients: Patient[]) => void,
-// ) {
 interface PatientProps {
   patients: Map<number, Patient>;
   ready: boolean;
@@ -55,8 +44,8 @@ export function Patients(props: PatientProps) {
   }
 
   const {navigate} = useNavigation();
-  const renderItem = ({item}: {item : Patient}) => {
-    const patient= item;
+  const renderItem = ({item}: {item: Patient}) => {
+    const patient = item;
     return (
       <ListItem
         title={patient.toString()}
@@ -106,12 +95,14 @@ export function Patients(props: PatientProps) {
       />
     );
   };
+  const consentPatients = Array.from(patients.values())
+    .filter(patient => patient.hasConsent())
+    .sort((a, b) => b.id - a.id);
+
   return (
     <Container>
       <FlatList<Patient>
-        data={Array.from(patients.values())
-          .filter(patient => patient.hasConsent())
-          .sort((a, b) => b.id - a.id)}
+        data={consentPatients}
         renderItem={renderItem}
         keyExtractor={(item, index) => item.id.toString()}
       />
@@ -121,20 +112,39 @@ export function Patients(props: PatientProps) {
 Patients.navigationOptions = () => {
   return {
     headerTitle: 'Patients',
-    headerRight: () => <CAddPatientButton />,
+    headerRight: () => (
+      <>
+        <SettingsButton />
+        <CAddPatientButton />
+      </>
+    ),
   };
 };
 
+const SettingsButton = () => {
+  const {navigate} = useNavigation();
+  return (
+    <Icon
+      iconStyle={{margin: 10}}
+      name="setting"
+      type="antdesign"
+      onPress={() => {
+        navigate('Settings');
+      }}
+    />
+  );
+};
+
 export default connect(
-  (state: FullState) => {
-    return {patients: state.state.patients, ready: state.state.ready};
+  (state: RootState) => {
+    return {patients: state.patients.patients, ready: state.patients.ready};
   },
   {setReady, navigatePatient},
 )(Patients);
 
 interface AddPatientButtonProps {
-    newPatientId : number
-    addPatient: typeof addPatient
+  newPatientId: number;
+  addPatient: typeof addPatient;
 }
 
 const AddPatientButton = (props: AddPatientButtonProps) => {
@@ -159,8 +169,8 @@ const AddPatientButton = (props: AddPatientButtonProps) => {
   );
 };
 const CAddPatientButton = connect(
-  (state: FullState) => {
-    const patientIds = Array.from(state.state.patients.keys());
+  (state: RootState) => {
+    const patientIds = Array.from(state.patients.patients.keys());
     const newPatientId =
       patientIds.length > 0 ? Math.max(...patientIds) + 1 : 1;
     return {

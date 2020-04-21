@@ -12,15 +12,16 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import {NavigationParams} from "react-navigation";
+import {NavigationParams} from 'react-navigation';
 import {Video} from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import {Icon} from 'react-native-elements';
 import {connect} from 'react-redux';
 
-import {Media, Pathology, Patient} from './patient';
 import {Thumbnail} from './thumbnail';
-import {FullState, getPatient} from "./state";
+import {RootState} from './store';
+import {getPatient} from './store/patients/reducers';
+import {Media, Pathology, Patient} from './store/patients/types';
 
 interface PatientDetailProps {
   patient: Patient;
@@ -121,8 +122,8 @@ export function PatientDetailComponent(props: PatientDetailProps) {
     </View>
   );
 }
-export const PatientDetail = connect((state: FullState) => {
-  const patient = getPatient(state);
+export const PatientDetail = connect((state: RootState) => {
+  const patient = getPatient(state.patients);
   return {patient};
 })(PatientDetailComponent);
 

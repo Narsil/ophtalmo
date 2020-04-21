@@ -1,6 +1,6 @@
 app/node_modules/**/*
-.expo/*
-npm-debug.*
+app/.expo/*
+app/npm-debug.*
 *.jks
 *.p8
 *.p12

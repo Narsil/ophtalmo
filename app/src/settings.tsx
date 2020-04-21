@@ -1,7 +1,8 @@
 import React from 'react';
 import {NavigationParams} from 'react-navigation';
 import {connect} from 'react-redux';
-import {FullState, changeServer} from './state';
+import {RootState} from './store';
+import {changeServer} from './store/server/actions';
 import {
   Button,
   Text,
@@ -38,7 +39,7 @@ const SettingsComponent = (props: Props) => {
 };
 
 export const Settings = connect(
-  (state: FullState) => {
+  (state: RootState) => {
     return state.server;
   },
   {changeServer},

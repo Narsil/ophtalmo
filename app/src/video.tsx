@@ -1,4 +1,3 @@
-import {Media, Patient} from './patient';
 import {Icon} from 'react-native-elements';
 import React from 'react';
 import {connect} from 'react-redux';
@@ -21,7 +20,10 @@ import {StackActions} from 'react-navigation';
 import * as Permissions from 'expo-permissions';
 import {Camera} from 'expo-camera';
 import * as VideoThumbnails from 'expo-video-thumbnails';
-import {FullState, getPatient, store, addMedia} from './state';
+import {RootState, store} from './store';
+import {Media, Patient} from './store/patients/types';
+import {addMedia} from './store/patients/actions';
+import {getPatient} from './store/patients/reducers';
 import {ListItem} from './listitem';
 import {Path, Svg, Defs, Rect, Mask, Circle, G} from 'react-native-svg';
 
@@ -38,7 +40,7 @@ function fileSize(size: number): string {
 
 const storeVideo = async (uri: string, filename: string): Promise<Media> => {
   const info = await FileSystem.getInfoAsync(uri);
-  const size = (info.size !== undefined)?info.size:0
+  const size = info.size !== undefined ? info.size : 0;
 
   const media: Media = {
     filename: filename,
@@ -77,8 +79,8 @@ const SvgMask = (props: SvgMaskProps) => {
 };
 
 const CircleMask = () => {
-  const [w, setW] = useState<null|number>(null);
-  const [h, setH] = useState<null|number>(null);
+  const [w, setW] = useState<null | number>(null);
+  const [h, setH] = useState<null | number>(null);
   return (
     <View
       style={StyleSheet.absoluteFill}
@@ -98,8 +100,12 @@ interface AddVideoProps {
 }
 function AddVideoComponent(props: AddVideoProps) {
   const {patient, addMedia} = props;
-  const [hasCameraPermission, setCameraPermission] = useState<boolean|null>(null);
-  const [hasVideoPermission, setVideoPermission] = useState<boolean|null>(null);
+  const [hasCameraPermission, setCameraPermission] = useState<boolean | null>(
+    null,
+  );
+  const [hasVideoPermission, setVideoPermission] = useState<boolean | null>(
+    null,
+  );
   const [flash, setFlash] = useState(Camera.Constants.FlashMode.torch);
   const [type, setType] = useState(Camera.Constants.Type.back);
   const [status, setStatus] = useState<'STILL' | 'RECORDING' | 'SAVING'>(
@@ -251,9 +257,9 @@ function AddVideoComponent(props: AddVideoProps) {
   }
 }
 export const AddVideo = connect(
-  (state: FullState) => {
+  (state: RootState) => {
     return {
-      patient: getPatient(state),
+      patient: getPatient(state.patients),
     };
   },
   {addMedia},
