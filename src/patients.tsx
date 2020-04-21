@@ -55,8 +55,8 @@ export function Patients(props: PatientProps) {
   }
 
   const {navigate} = useNavigation();
-  const renderItem = ({item}: {item : Patient}) => {
-    const patient= item;
+  const renderItem = ({item}: {item: Patient}) => {
+    const patient = item;
     return (
       <ListItem
         title={patient.toString()}
@@ -121,8 +121,27 @@ export function Patients(props: PatientProps) {
 Patients.navigationOptions = () => {
   return {
     headerTitle: 'Patients',
-    headerRight: () => <CAddPatientButton />,
+    headerRight: () => (
+      <>
+        <SettingsButton />
+        <CAddPatientButton />
+      </>
+    ),
   };
+};
+
+const SettingsButton = () => {
+  const {navigate} = useNavigation();
+  return (
+    <Icon
+      iconStyle={{margin: 10}}
+      name="setting"
+      type="antdesign"
+      onPress={() => {
+        navigate('Settings');
+      }}
+    />
+  );
 };
 
 export default connect(
@@ -133,8 +152,8 @@ export default connect(
 )(Patients);
 
 interface AddPatientButtonProps {
-    newPatientId : number
-    addPatient: typeof addPatient
+  newPatientId: number;
+  addPatient: typeof addPatient;
 }
 
 const AddPatientButton = (props: AddPatientButtonProps) => {

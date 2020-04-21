@@ -7,31 +7,31 @@ const INITIAL_STATE = {
   patients: new Map<number, Patient>(),
   patientId: null,
 };
-export interface State{
-    ready: boolean;
-    patients: Map<number, Patient>;
-    patientId: null|number;
+export interface State {
+  ready: boolean;
+  patients: Map<number, Patient>;
+  patientId: null | number;
 }
 
-export function getPatient(state: FullState): Patient{
-    if (state.state.patientId == null){
-        console.error("Can't get state patient, as no one as been set");
-    }
-    const patient = state.state.patients.get(state.state.patientId!);
-    if (patient === undefined){
-        console.error("Can't get state patient, it does not  exist in the map");
-    }
-    return patient!
+export function getPatient(state: FullState): Patient {
+  if (state.state.patientId == null) {
+    console.error("Can't get state patient, as no one as been set");
+  }
+  const patient = state.state.patients.get(state.state.patientId!);
+  if (patient === undefined) {
+    console.error("Can't get state patient, it does not  exist in the map");
+  }
+  return patient!;
 }
-
 
 export enum ACTIONS {
-    ADD_PATIENT= 'ADD_PATIENT',
-    SET_READY= 'SET_READY',
-    ADD_CONSENT = 'ADD_CONSENT',
-    ADD_MEDIA = 'ADD_MEDIA',
-    NAVIGATE_PATIENT = 'NAVIGATE_PATIENT',
-    ADD_PATHOLOGY = 'ADD_PATHOLOGY',
+  ADD_PATIENT = 'ADD_PATIENT',
+  SET_READY = 'SET_READY',
+  ADD_CONSENT = 'ADD_CONSENT',
+  ADD_MEDIA = 'ADD_MEDIA',
+  NAVIGATE_PATIENT = 'NAVIGATE_PATIENT',
+  ADD_PATHOLOGY = 'ADD_PATHOLOGY',
+  CHANGE_SERVER = 'CHANGE_SERVER',
 }
 
 export function addPatient(patient: Patient): NewPatientAction {
@@ -80,46 +80,61 @@ export function navigatePatient(patient: Patient): NavigateAction {
   };
 }
 
-interface BaseAction {
-    type: ACTIONS;
+export function changeServer(server: string): ChangeServerAction {
+  return {
+    type: ACTIONS.CHANGE_SERVER,
+    payload: server,
+  };
 }
-interface PatientsAction extends BaseAction{
+
+interface BaseAction {
+  type: ACTIONS;
+}
+interface PatientsAction extends BaseAction {
   type: ACTIONS.SET_READY;
   patients: Map<number, Patient>;
 }
-interface NewPatientAction extends BaseAction{
+interface NewPatientAction extends BaseAction {
   type: ACTIONS.ADD_PATIENT;
   patient: Patient;
 }
-interface NavigateAction extends BaseAction{
+interface NavigateAction extends BaseAction {
   type: ACTIONS.NAVIGATE_PATIENT;
   patient: Patient;
 }
 
-
-interface BasePatientAction extends BaseAction{
+interface BasePatientAction extends BaseAction {
   patient: Patient;
 }
-interface MediaAction extends BasePatientAction{
+interface MediaAction extends BasePatientAction {
   type: ACTIONS.ADD_MEDIA;
   media: Media;
 }
-interface ConsentAction extends BasePatientAction{
+interface ConsentAction extends BasePatientAction {
   type: ACTIONS.ADD_CONSENT;
   uri: string;
 }
-interface PathologyAction extends BasePatientAction{
+interface PathologyAction extends BasePatientAction {
   type: ACTIONS.ADD_PATHOLOGY;
   pathology: Pathology;
 }
 
-type PatientAction = MediaAction | ConsentAction | PathologyAction;
-type Action = PatientAction | PatientsAction | NavigateAction | NewPatientAction;
-
-function assertUnreachable(x: never): void {
-    // throw new Error("Didn't expect to get here");
+interface ChangeServerAction extends BaseAction {
+  type: ACTIONS.CHANGE_SERVER;
+  payload: string;
 }
 
+type PatientAction = MediaAction | ConsentAction | PathologyAction;
+type Action =
+  | PatientAction
+  | PatientsAction
+  | NavigateAction
+  | NewPatientAction
+  | ChangeServerAction;
+
+function assertUnreachable(x: never): void {
+  // throw new Error("Didn't expect to get here");
+}
 
 const patientReducer = (patient: Patient, action: PatientAction): Patient => {
   const newPatient = copyPatient(patient);
@@ -162,22 +177,46 @@ const mainReducer = (state: State = INITIAL_STATE, action: Action): State => {
     case ACTIONS.ADD_MEDIA:
     case ACTIONS.ADD_PATHOLOGY:
       const patient = state.patients.get(action.patient.id);
-      if (patient === undefined){
-          console.warn(`Action attempted on non existing patient ${action.patient.id}`)
-          return state;
+      if (patient === undefined) {
+        console.warn(
+          `Action attempted on non existing patient ${action.patient.id}`,
+        );
+        return state;
       }
       const newPatient = patientReducer(patient, action);
       const newPatients = new Map(state.patients);
       newPatients.set(newPatient.id, newPatient);
       return {...state, patients: newPatients};
+    default:
+      break;
   }
-  assertUnreachable(action);
+  // assertUnreachable(action);
   // Actually Here actions might be native redux actions.
+  return state;
+};
+
+interface ServerState {
+  server: string;
+}
+const SERVER_STATE: ServerState = {
+  server: '128.0.0.1',
+};
+const serverReducer = (
+  state: ServerState = SERVER_STATE,
+  action: Action,
+): ServerState => {
+  switch (action.type) {
+    case ACTIONS.CHANGE_SERVER:
+      return {server: action.payload};
+    default:
+      break;
+  }
   return state;
 };
 
 export const reducer = combineReducers({
   state: mainReducer,
+  server: serverReducer,
 });
 export type FullState = ReturnType<typeof reducer>;
 

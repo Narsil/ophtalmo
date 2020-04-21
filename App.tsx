@@ -16,6 +16,7 @@ import Patients from './src/patients';
 import {Consent} from './src/consent';
 import {reducer, addPatient, store} from './src/state';
 import {PatientDetail} from './src/patient-detail';
+import {Settings} from './src/settings';
 
 const MainNavigator = createStackNavigator(
   {
@@ -24,6 +25,7 @@ const MainNavigator = createStackNavigator(
     Consent: {screen: Consent},
     AddVideo: {screen: AddVideo},
     PlayVideo: {screen: PlayVideo},
+    Settings: {screen: Settings},
     PathologyDetail: {screen: PathologyDetail},
   },
   {initialRouteName: 'Patients'},

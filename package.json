@@ -8,6 +8,7 @@
     "eject": "expo eject"
   },
   "dependencies": {
+    "@types/react-native-material-ui": "^1.32.0",
     "@types/react-redux": "^7.1.5",
     "expo": "^35.0.0",
     "expo-av": "~7.0.0",
