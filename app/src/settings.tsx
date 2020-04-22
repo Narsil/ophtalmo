@@ -8,11 +8,11 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  TextInput,
   View,
   TouchableOpacity,
   Switch,
 } from 'react-native';
+import {TextInput} from 'react-native-paper';
 
 interface Props {
   server: string;
@@ -23,17 +23,20 @@ const SettingsComponent = (props: Props) => {
   const {server, changeServer} = props;
   return (
     <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      <Text>Adresse du serveur</Text>
-      <TextInput
-        value={server}
-        onChangeText={text => changeServer(text)}
-        style={{
-          borderColor: 'gray',
-          borderWidth: 1,
-          padding: 20,
-          borderRadius: 5,
-        }}
-      />
+      <View style={{height: 50}}>
+        <TextInput
+          label="Adresse du Serveur"
+          value={server}
+          onChangeText={text => changeServer(text)}
+          mode="outlined"
+          // style={{
+          //   borderColor: 'gray',
+          //   borderWidth: 1,
+          //   padding: 20,
+          //   borderRadius: 5,
+          // }}
+        />
+      </View>
     </View>
   );
 };

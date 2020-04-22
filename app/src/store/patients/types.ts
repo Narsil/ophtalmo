@@ -1,20 +1,28 @@
 import * as FileSystem from 'expo-file-system';
 
+export type Uuid = string;
+
 export interface PatientsState {
   ready: boolean;
-  patients: Map<number, Patient>;
-  patientId: null | number;
+  patients: Map<Uuid, Patient>;
+  patientId: null | Uuid;
+}
+
+export function directory(patient: Patient) {
+  const uri = FileSystem.documentDirectory + `/${patient.id}`;
+  return uri;
 }
 
 const consentFilename = 'consent.png';
 export function consentUri(patient: Patient): string {
-  const uri = FileSystem.documentDirectory + `${patient.id}/${consentFilename}`;
+  const uri = `${directory(patient)}/${consentFilename}`;
   return uri;
 }
 
 const pathologyFilename = 'pathology.json';
 export function pathologyUri(patient: Patient): string {
-  return FileSystem.documentDirectory + `${patient.id}/${pathologyFilename}`;
+  const uri = `${directory(patient)}/${pathologyFilename}`;
+  return uri;
 }
 
 const isToday = (someDate: Date): boolean => {
@@ -27,18 +35,20 @@ const isToday = (someDate: Date): boolean => {
 };
 
 export class Patient {
-  id: number;
+  id: Uuid;
   media: Media[];
   consentUri: string | null;
   pathology: Pathology | null;
-  created: Date;
+  uploaded: boolean;
+  created: Date | null;
 
-  constructor(id: number) {
+  constructor(id: Uuid) {
     this.id = id;
     this.media = [];
     this.consentUri = null;
     this.pathology = null;
-    this.created = new Date();
+    this.created = null;
+    this.uploaded = false;
   }
 
   hasMedia() {
@@ -53,11 +63,15 @@ export class Patient {
 
   toString() {
     const t = this.created;
-    const paddedMinutes = ('0' + ('' + t.getMinutes())).slice(-2);
-    const time = t.getHours() + 'h' + paddedMinutes;
-    const date = t.getDate() + '/' + t.getMonth();
-    const str = isToday(this.created) ? time : date + ' ' + time;
-    return `Patient ${str}`;
+    if (t !== null) {
+      const paddedMinutes = ('0' + ('' + t.getMinutes())).slice(-2);
+      const time = t.getHours() + 'h' + paddedMinutes;
+      const date = t.getDate() + '/' + t.getMonth();
+      const str = isToday(t) ? time : date + ' ' + time;
+      return `Patient ${str}`;
+    } else {
+      return `Patient`;
+    }
   }
 }
 export interface Media {
@@ -72,8 +86,8 @@ export interface Pathology {
   hasUlcer: boolean;
 }
 
-export async function loadPatient(patientId: string): Promise<Patient> {
-  const patient = new Patient(parseInt(patientId));
+export async function loadPatient(patientId: Uuid): Promise<Patient> {
+  const patient = new Patient(patientId);
   const directory = FileSystem.documentDirectory + patientId;
   const filenames = await FileSystem.readDirectoryAsync(directory);
   const info = await FileSystem.getInfoAsync(directory);
@@ -124,10 +138,12 @@ export const ADD_PATHOLOGY = 'ADD_PATHOLOGY';
 export const ADD_PATIENT = 'ADD_PATIENT';
 export const SET_READY = 'SET_READY';
 export const NAVIGATE_PATIENT = 'NAVIGATE_PATIENT';
+export const DELETED_PATIENT = 'DELETED_PATIENT';
+export const UPLOADED_PATIENT = 'UPLOADED_PATIENT';
 
 interface PatientsReadyAction {
   type: typeof SET_READY;
-  patients: Map<number, Patient>;
+  patients: Map<Uuid, Patient>;
 }
 
 interface AddPatientAction {
@@ -159,11 +175,19 @@ interface AddConsentAction extends BasePatientAction {
   type: typeof ADD_CONSENT;
   uri: string;
 }
+interface DeletedPatientAction extends BasePatientAction {
+  type: typeof DELETED_PATIENT;
+}
+interface UploadedPatientAction extends BasePatientAction {
+  type: typeof UPLOADED_PATIENT;
+}
 
 export type PatientActionType =
   | AddConsentAction
   | MediaAction
   | ConsentAction
+  | DeletedPatientAction
+  | UploadedPatientAction
   | PathologyAction;
 
 export type PatientsActionType =

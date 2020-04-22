@@ -10,5 +10,9 @@ app/npm-debug.*
 app/web-build/
 app/web-report/
 
+server/uploads/
+*.pyc
+*.pyo
+*__pycache__
 # macOS
 .DS_Store

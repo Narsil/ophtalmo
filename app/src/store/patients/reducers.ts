@@ -8,7 +8,10 @@ import {
   ADD_PATHOLOGY,
   ADD_PATIENT,
   NAVIGATE_PATIENT,
+  DELETED_PATIENT,
+  UPLOADED_PATIENT,
   SET_READY,
+  Uuid,
 } from './types';
 
 export function copyPatient(other: Patient) {
@@ -17,12 +20,14 @@ export function copyPatient(other: Patient) {
   patient.media = other.media.slice(0);
   patient.consentUri = other.consentUri;
   patient.pathology = other.pathology ? {...other.pathology} : null;
+  patient.created = other.created;
+  patient.uploaded = other.uploaded;
   return patient;
 }
 
 const INITIAL_STATE = {
   ready: false,
-  patients: new Map<number, Patient>(),
+  patients: new Map<Uuid, Patient>(),
   patientId: null,
 };
 
@@ -45,12 +50,18 @@ const patientReducer = (
   switch (action.type) {
     case ADD_CONSENT:
       newPatient.consentUri = action.uri;
+      newPatient.uploaded = false;
       return newPatient;
     case ADD_MEDIA:
       newPatient.media.push(action.media);
+      newPatient.uploaded = false;
       return newPatient;
     case ADD_PATHOLOGY:
       newPatient.pathology = action.pathology;
+      newPatient.uploaded = false;
+      return newPatient;
+    case UPLOADED_PATIENT:
+      newPatient.uploaded = true;
       return newPatient;
     default:
       break;
@@ -82,9 +93,27 @@ export const patientsReducer = (
         patients: action.patients,
         ready: true,
       };
+    case DELETED_PATIENT:
+      const patient_to_delete = state.patients.get(action.patient.id);
+      if (patient_to_delete === undefined) {
+        console.warn(
+          `We can't delete an inexistent patient ${action.patient.id}`,
+        );
+        return state;
+      }
+      if (patient_to_delete.hasConsent()) {
+        console.warn(
+          `We can't delete a patient with consent${action.patient.id}`,
+        );
+        return state;
+      }
+      const newPatients2 = new Map(state.patients);
+      newPatients2.delete(patient_to_delete.id);
+      return {...state, patients: newPatients2};
     case ADD_CONSENT:
     case ADD_MEDIA:
     case ADD_PATHOLOGY:
+    case UPLOADED_PATIENT:
       const patient = state.patients.get(action.patient.id);
       if (patient === undefined) {
         console.warn(

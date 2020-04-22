@@ -4,22 +4,40 @@ import {AppLoading} from 'expo';
 import * as FileSystem from 'expo-file-system';
 import {useNavigation, useNavigationParam} from 'react-navigation-hooks';
 import {Button, Text, FlatList, StyleSheet, View} from 'react-native';
+
+// Necessary to import getRandomValues in react.
+// import 'react-native-get-random-values';
+// import {v4 as uuidv4} from 'uuid';
+// TODO: Waiting on expo to implement correct getRandomValues
+// https://github.com/expo/expo/issues/7209
+// https://github.com/ai/nanoid/issues/207
+// Instead for now taking solution from https://stackoverflow.com/questions/105034/how-to-create-guid-uuid
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = (Math.random() * 16) | 0,
+      v = c == 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 import {Icon} from 'react-native-elements';
-import {ListItem} from './listitem';
+import {connect} from 'react-redux';
 import {Container} from 'native-base';
+
 import {RootState} from './store';
+import {ListItem} from './listitem';
+import {Uuid} from './store/patients/types';
 import {addPatient, setReady, navigatePatient} from './store/patients/actions';
 import {Thumbnail} from './thumbnail';
-import {connect} from 'react-redux';
 
 interface PatientProps {
-  patients: Map<number, Patient>;
+  patients: Map<Uuid, Patient>;
   ready: boolean;
-  setReady: (patients: Map<number, Patient>) => void;
+  setReady: (patients: Map<Uuid, Patient>) => void;
   addPatient: any;
   navigatePatient: any;
 }
-export function Patients(props: PatientProps) {
+export const PatientsComponent = (props: PatientProps) => {
   const {patients, ready, setReady, addPatient, navigatePatient} = props;
   if (!ready) {
     return (
@@ -30,7 +48,7 @@ export function Patients(props: PatientProps) {
           ).then(patientIds => {
             Promise.all(patientIds.map(loadPatient)).then(patients => {
               setReady(
-                new Map<number, Patient>(
+                new Map<Uuid, Patient>(
                   patients.map(patient => [patient.id, patient]),
                 ),
               );
@@ -97,7 +115,11 @@ export function Patients(props: PatientProps) {
   };
   const consentPatients = Array.from(patients.values())
     .filter(patient => patient.hasConsent())
-    .sort((a, b) => b.id - a.id);
+    .sort((a, b) =>
+      b.created === null || a.created === null
+        ? 1
+        : b.created.getTime() - a.created.getTime(),
+    );
 
   return (
     <Container>
@@ -108,8 +130,8 @@ export function Patients(props: PatientProps) {
       />
     </Container>
   );
-}
-Patients.navigationOptions = () => {
+};
+PatientsComponent.navigationOptions = () => {
   return {
     headerTitle: 'Patients',
     headerRight: () => (
@@ -135,32 +157,30 @@ const SettingsButton = () => {
   );
 };
 
-export default connect(
+export const Patients = connect(
   (state: RootState) => {
     return {patients: state.patients.patients, ready: state.patients.ready};
   },
   {setReady, navigatePatient},
-)(Patients);
+)(PatientsComponent);
 
 interface AddPatientButtonProps {
-  newPatientId: number;
   addPatient: typeof addPatient;
 }
 
 const AddPatientButton = (props: AddPatientButtonProps) => {
   const {navigate} = useNavigation();
   const {addPatient} = props;
+  const newPatientId = uuidv4();
   return (
     <Icon
       iconStyle={{margin: 10}}
       name="plus"
       type="antdesign"
       onPress={() => {
-        const newPatientKey = '' + props.newPatientId;
-        const patient = new Patient(props.newPatientId);
-        FileSystem.makeDirectoryAsync(
-          FileSystem.documentDirectory + newPatientKey,
-        ).then(() => {
+        const newPatientDir = `${FileSystem.documentDirectory}/${newPatientId}`;
+        const patient = new Patient(newPatientId);
+        FileSystem.makeDirectoryAsync(newPatientDir).then(() => {
           addPatient(patient);
           navigate('Consent');
         });
@@ -168,17 +188,7 @@ const AddPatientButton = (props: AddPatientButtonProps) => {
     />
   );
 };
-const CAddPatientButton = connect(
-  (state: RootState) => {
-    const patientIds = Array.from(state.patients.patients.keys());
-    const newPatientId =
-      patientIds.length > 0 ? Math.max(...patientIds) + 1 : 1;
-    return {
-      newPatientId,
-    };
-  },
-  {addPatient},
-)(AddPatientButton);
+const CAddPatientButton = connect(undefined, {addPatient})(AddPatientButton);
 
 const styles = StyleSheet.create({
   container: {

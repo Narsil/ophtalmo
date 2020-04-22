@@ -59,7 +59,7 @@ const SvgMask = (props: SvgMaskProps) => {
   const w = width + 1;
   const h = height;
   const path = `M 0 0 L 0 ${h} L ${w} ${h} L ${w} 0Z`;
-  console.log(w, h);
+  // console.log(w, h);
 
   return (
     <Svg height="100%" width="100%" viewBox={`0 0 ${w} ${h}`}>
@@ -204,31 +204,45 @@ function AddVideoComponent(props: AddVideoProps) {
                   setFlash(Camera.Constants.FlashMode.torch);
                 }, 1000);
               }
-              camera.current!.recordAsync({maxDuration: 30}).then(video => {
-                setStatus('SAVING');
-                const timestamp = new Date();
-                const filename = `${timestamp
-                  .toISOString()
-                  .replace(/:/g, '')
-                  .replace(/\./g, '-')}.${extension}`;
-                const directory = `${FileSystem.documentDirectory}${patient.id}/media/`;
-                const uri = `${directory}${filename}`;
-                FileSystem.makeDirectoryAsync(directory, {
-                  intermediates: true,
-                }).then(() => {
-                  FileSystem.copyAsync({from: video.uri, to: uri})
-                    .then(() => {
-                      storeVideo(uri, filename).then(media => {
-                        setStatus('STILL');
-                        addMedia(patient, media);
-                        navigation.goBack();
+              camera
+                .current!.recordAsync({
+                  maxDuration: 30,
+                  quality: '720p',
+                  // mute: true,
+                })
+                .then(video => {
+                  setStatus('SAVING');
+                  const timestamp = new Date();
+                  const filename = `${timestamp
+                    .toISOString()
+                    .replace(/:/g, '')
+                    .replace(/\./g, '-')}.${extension}`;
+                  const directory = `${FileSystem.documentDirectory}${patient.id}/media/`;
+                  const uri = `${directory}${filename}`;
+                  const copy = () => {
+                    FileSystem.copyAsync({from: video.uri, to: uri})
+                      .then(() => {
+                        storeVideo(uri, filename).then(media => {
+                          setStatus('STILL');
+                          addMedia(patient, media);
+                          navigation.goBack();
+                        });
+                      })
+                      .catch(err => {
+                        console.error(`Error copying video. ${err}`);
                       });
-                    })
-                    .catch(err => {
-                      console.error(`Error copying video. ${err}`);
-                    });
+                  };
+
+                  FileSystem.getInfoAsync(directory).then(info => {
+                    if (info.exists) {
+                      copy();
+                    } else {
+                      FileSystem.makeDirectoryAsync(directory, {
+                        intermediates: true,
+                      }).then(copy);
+                    }
+                  });
                 });
-              });
             } else {
               camera.current!.stopRecording();
             }
