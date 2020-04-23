@@ -4,6 +4,7 @@ import {connect} from 'react-redux';
 import {Video as ExpoVideo} from 'expo-av';
 import {useState, useEffect} from 'react';
 import * as FileSystem from 'expo-file-system';
+import {NavigationParams} from 'react-navigation';
 import {
   Dimensions,
   Button,
@@ -260,8 +261,8 @@ function AddVideoComponent(props: AddVideoProps) {
             <Icon
               size={40}
               reverse
-              name="record"
-              type="foundation"
+              name="video-camera"
+              type="entypo"
               color="#c00"
             />
           )}
@@ -270,6 +271,13 @@ function AddVideoComponent(props: AddVideoProps) {
     );
   }
 }
+
+AddVideoComponent.navigationOptions = ({navigation}: NavigationParams) => {
+  return {
+    headerTitle: `Ajout de vidéo`,
+  };
+};
+
 export const AddVideo = connect(
   (state: RootState) => {
     return {
@@ -280,7 +288,7 @@ export const AddVideo = connect(
 )(AddVideoComponent);
 
 AddVideoComponent.navigationOptions = () => {
-  return {title: "Vidéo de l'oeil"};
+  return {headerTitle: "Vidéo de l'oeil"};
 };
 
 export const PlayVideo = () => {

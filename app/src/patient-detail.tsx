@@ -122,25 +122,44 @@ export function PatientDetailComponent(props: PatientDetailProps) {
     </View>
   );
 }
-export const PatientDetail = connect((state: RootState) => {
-  const patient = getPatient(state.patients);
-  return {patient};
-})(PatientDetailComponent);
 
 PatientDetailComponent.navigationOptions = ({navigation}: NavigationParams) => {
   return {
     headerTitle: `Patient`,
     headerRight: () => {
       return (
-        <View style={{flexDirection: 'row'}}>
-          <Icon
-            iconStyle={{margin: 10}}
-            name="file-document-outline"
-            type="material-community"
-            onPress={() => navigation.navigate('Consent')}
-          />
-        </View>
+        <>
+          <ConsentButton />
+          <TouchableOpacity
+            style={{justifyContent: 'center', margin: 10}}
+            onPress={() => {
+              navigation.goBack();
+            }}>
+            <Text
+              style={{
+                fontSize: 24,
+              }}>
+              Ok
+            </Text>
+          </TouchableOpacity>
+        </>
       );
     },
   };
 };
+
+const ConsentButton = () => {
+  const {navigate} = useNavigation();
+  return (
+    <Icon
+      iconStyle={{margin: 10}}
+      name="file-document-outline"
+      type="material-community"
+      onPress={() => navigate('Consent')}
+    />
+  );
+};
+export const PatientDetail = connect((state: RootState) => {
+  const patient = getPatient(state.patients);
+  return {patient};
+})(PatientDetailComponent);

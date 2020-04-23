@@ -17,7 +17,6 @@ import {Consent} from './src/consent';
 import {store} from './src/store';
 import {PatientDetail} from './src/patient-detail';
 import {Settings} from './src/settings';
-import {Uploader} from './src/uploader';
 
 const MainNavigator = createStackNavigator(
   {
@@ -39,7 +38,6 @@ const App = () => {
     <StoreProvider store={store}>
       <PaperProvider>
         <AppNavigator />
-        <Uploader />
       </PaperProvider>
     </StoreProvider>
   );

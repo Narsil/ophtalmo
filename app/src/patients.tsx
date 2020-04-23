@@ -5,6 +5,8 @@ import * as FileSystem from 'expo-file-system';
 import {useNavigation, useNavigationParam} from 'react-navigation-hooks';
 import {Button, Text, FlatList, StyleSheet, View} from 'react-native';
 
+import {Uploader} from './uploader';
+
 // Necessary to import getRandomValues in react.
 // import 'react-native-get-random-values';
 // import {v4 as uuidv4} from 'uuid';
@@ -128,6 +130,7 @@ export const PatientsComponent = (props: PatientProps) => {
         renderItem={renderItem}
         keyExtractor={(item, index) => item.id.toString()}
       />
+      <Uploader />
     </Container>
   );
 };
@@ -171,15 +174,17 @@ interface AddPatientButtonProps {
 const AddPatientButton = (props: AddPatientButtonProps) => {
   const {navigate} = useNavigation();
   const {addPatient} = props;
-  const newPatientId = uuidv4();
   return (
     <Icon
       iconStyle={{margin: 10}}
       name="plus"
       type="antdesign"
       onPress={() => {
+        const newPatientId = uuidv4();
+        // console.log('New patient id', newPatientId);
         const newPatientDir = `${FileSystem.documentDirectory}/${newPatientId}`;
         const patient = new Patient(newPatientId);
+        patient.created = new Date();
         FileSystem.makeDirectoryAsync(newPatientDir).then(() => {
           addPatient(patient);
           navigate('Consent');

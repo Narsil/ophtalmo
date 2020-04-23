@@ -37,7 +37,10 @@ export function getPatient(state: PatientsState): Patient {
   }
   const patient = state.patients.get(state.patientId!);
   if (patient === undefined) {
-    console.error("Can't get state patient, it does not  exist in the map");
+    // console.error('Existing patients ', state.patients.keys());
+    console.error(
+      `Can't get state patient ${state.patientId}, it does not  exist in the map`,
+    );
   }
   return patient!;
 }
@@ -73,13 +76,16 @@ export const patientsReducer = (
   state: PatientsState = INITIAL_STATE,
   action: PatientsActionType,
 ): PatientsState => {
+  // console.log(action.type);
   switch (action.type) {
     case ADD_PATIENT:
       if (state.patients.get(action.patient.id) !== undefined) {
         throw new Error("Can't add already existing patient");
+        return state;
       }
       var newPats = new Map(state.patients);
       newPats.set(action.patient.id, action.patient);
+      console.log('ADD_PATIENT', newPats, action.patient.id);
       return {...state, patients: newPats, patientId: action.patient.id};
     //
     case NAVIGATE_PATIENT:
@@ -101,11 +107,18 @@ export const patientsReducer = (
         );
         return state;
       }
-      if (patient_to_delete.hasConsent()) {
-        console.warn(
-          `We can't delete a patient with consent${action.patient.id}`,
-        );
-        return state;
+      if (patient_to_delete.hasConsent() && !patient_to_delete.uploaded) {
+        if (patient_to_delete.hasConsent()) {
+          console.warn(
+            `We can't delete a patient with consent ${action.patient.id}`,
+          );
+          return state;
+        } else {
+          console.warn(
+            `We can't delete a patient that is not synced ${action.patient.id}`,
+          );
+          return state;
+        }
       }
       const newPatients2 = new Map(state.patients);
       newPatients2.delete(patient_to_delete.id);
@@ -124,6 +137,7 @@ export const patientsReducer = (
       const newPatient = patientReducer(patient, action);
       const newPatients = new Map(state.patients);
       newPatients.set(newPatient.id, newPatient);
+      console.log('Uploaded ', newPatients);
       return {...state, patients: newPatients};
     default:
       break;

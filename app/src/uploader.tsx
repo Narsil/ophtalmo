@@ -1,7 +1,7 @@
 import React from 'react';
 import * as FileSystem from 'expo-file-system';
 import {connect} from 'react-redux';
-import {View, Text} from 'react-native';
+import {Button, View, Text, Alert} from 'react-native';
 import {useEffect} from 'react';
 import {ProgressBar, Colors} from 'react-native-paper';
 
@@ -24,6 +24,7 @@ interface Props {
   server: string;
   patients: Map<Uuid, Patient>;
   setServerStatus: Action;
+  deletedPatient: typeof deletedPatient;
 }
 
 const CHECK_PERIOD = 10 * 1000; // 10s
@@ -95,11 +96,19 @@ async function uploadMedia(patient: Patient) {
     );
   }
 }
+
+function isNewPatient(patient: Patient): boolean {
+  const now = new Date();
+  return !(
+    patient.created !== null &&
+    now.getTime() - patient.created.getTime() > 600 * 1000
+  );
+}
+
 async function upload(patient: Patient) {
   // console.log(patient);
-  if (!patient.hasConsent()) {
-    // We are sure at this point that this patient is not the last in the list,
-    // so we can safely delete empty patients
+  // Check if patient was created more than 10mn ago.
+  if (!patient.hasConsent() && !isNewPatient(patient)) {
     const dir = directory(patient);
     FileSystem.deleteAsync(dir).then(() => {
       store.dispatch(deletedPatient(patient));
@@ -115,10 +124,8 @@ async function upload(patient: Patient) {
   store.dispatch(uploadedPatient(patient));
 }
 
-function checkUpload(server: string, patients: Map<Uuid, Patient>) {
-  const to_upload_patients = Array.from(patients.values()).filter(
-    patient => !patient.uploaded,
-  );
+function checkUpload(server: string, patients: Patient[]) {
+  const to_upload_patients = patients.filter(patient => !patient.uploaded);
   if (to_upload_patients.length > 0) {
     setTimeout(() => {
       const patient = to_upload_patients[0];
@@ -129,8 +136,8 @@ function checkUpload(server: string, patients: Map<Uuid, Patient>) {
     }, 100);
   }
 
-  const uploaded = patients.size - to_upload_patients.length;
-  const total = patients.size;
+  const uploaded = patients.length - to_upload_patients.length;
+  const total = patients.length;
   const progress = uploaded / total;
 
   const msg = `Uploading ${uploaded} / ${total} patients`;
@@ -138,7 +145,7 @@ function checkUpload(server: string, patients: Map<Uuid, Patient>) {
 }
 
 export const UploaderComponent = (props: Props) => {
-  const {patients, status, server, setServerStatus} = props;
+  const {patients, status, server, setServerStatus, deletedPatient} = props;
   const height = 40;
 
   useEffect(() => {
@@ -173,15 +180,54 @@ export const UploaderComponent = (props: Props) => {
     );
   }
   // Status is Online here
-  const isEmpty = patients.size === 0;
+  const upload_patients = Array.from(patients.values()).filter(
+    (patient: Patient, index: number) => {
+      return !isNewPatient(patient) || index != patients.size - 1;
+    },
+  );
+  const isEmpty = upload_patients.length === 0;
   if (isEmpty) {
     return <></>;
   }
-  const {progress, msg} = checkUpload(server, patients);
+  const {progress, msg} = checkUpload(server, upload_patients);
+
+  const cleanUploaded = () => {
+    Alert.alert(
+      'Suppression des fichiers',
+      'Êtes-vous sûrs de vouloir supprimer les fichiers de ce téléphone (ils sont sauvegardés sur un autre serveur) ?',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Cancel Pressed'),
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: () => {
+            // console.log('OK Pressed');
+            patients.forEach((patient: Patient, patientId: Uuid) => {
+              if (patient.uploaded) {
+                FileSystem.deleteAsync(directory(patient)).then(() => {
+                  deletedPatient(patient);
+                });
+              }
+            });
+          },
+        },
+      ],
+      {cancelable: false},
+    );
+  };
   const content =
     progress == 1 ? (
-      <View>
-        <Text>{'Contenu sauvegardé, supprimer les données locales ?'}</Text>
+      <View
+        style={{
+          flex: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+        <Button title="Vider les anciens patients" onPress={cleanUploaded} />
       </View>
     ) : (
       <>
@@ -202,5 +248,5 @@ export const Uploader = connect(
       patients: state.patients.patients,
     };
   },
-  {setServerStatus},
+  {setServerStatus, deletedPatient},
 )(UploaderComponent);

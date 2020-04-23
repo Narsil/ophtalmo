@@ -3,6 +3,7 @@ import {Icon} from 'react-native-elements';
 import {Patient, consentUri} from './store/patients/types';
 import {connect} from 'react-redux';
 import * as FileSystem from 'expo-file-system';
+import {NavigationParams} from 'react-navigation';
 import {
   Button,
   Text,
@@ -130,6 +131,11 @@ function ConsentComponent(props: ConsentProps) {
     </View>
   );
 }
+ConsentComponent.navigationOptions = ({navigation}: NavigationParams) => {
+  return {
+    headerTitle: `Consentement`,
+  };
+};
 export const Consent = connect(
   (state: RootState) => {
     const patient = getPatient(state.patients);
@@ -137,9 +143,3 @@ export const Consent = connect(
   },
   {addConsent},
 )(ConsentComponent);
-
-ConsentComponent.navigationOptions = () => {
-  return {
-    title: `Consentement`,
-  };
-};
