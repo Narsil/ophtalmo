@@ -1,8 +1,9 @@
 import React from 'react';
 import {Icon} from 'react-native-elements';
-import {Patient, consentUri} from './patient';
+import {Patient, consentUri} from './store/patients/types';
 import {connect} from 'react-redux';
 import * as FileSystem from 'expo-file-system';
+import {NavigationParams} from 'react-navigation';
 import {
   Button,
   Text,
@@ -18,7 +19,9 @@ import {useNavigation, useNavigationParam} from 'react-navigation-hooks';
 // @ts-ignore
 import ExpoPixi from 'expo-pixi';
 import {useState, useEffect} from 'react';
-import {FullState, getPatient, store, addConsent} from './state';
+import {RootState} from './store';
+import {addConsent} from './store/patients/actions';
+import {getPatient} from './store/patients/reducers';
 
 function save(canvas: any, uri: string) {
   const promise = new Promise<string>(function(resolve, reject) {
@@ -28,7 +31,7 @@ function save(canvas: any, uri: string) {
         quality: 0.5,
         result: 'file',
       })
-      .then((result: {uri : string}) => {
+      .then((result: {uri: string}) => {
         FileSystem.copyAsync({from: result.uri, to: uri}).then(() => {
           resolve(uri);
         });
@@ -128,16 +131,15 @@ function ConsentComponent(props: ConsentProps) {
     </View>
   );
 }
+ConsentComponent.navigationOptions = ({navigation}: NavigationParams) => {
+  return {
+    headerTitle: `Consentement`,
+  };
+};
 export const Consent = connect(
-  (state:FullState) => {
-    const patient = getPatient(state);
+  (state: RootState) => {
+    const patient = getPatient(state.patients);
     return {patient};
   },
   {addConsent},
 )(ConsentComponent);
-
-ConsentComponent.navigationOptions = () => {
-  return {
-    title: `Consentement`,
-  };
-};

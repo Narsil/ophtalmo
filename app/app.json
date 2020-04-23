@@ -19,7 +19,10 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.ophtalmo.ophtalmo"
+      "bundleIdentifier": "com.ophtalmo.ophtalmo",
+      "infoPlist": {
+        "UIBackgroundModes": ["fetch"]
+      }
     },
     "android": {
       "package": "com.ophtalmo.ophtalmo"

@@ -1,10 +1,10 @@
-import {Media, Patient} from './patient';
 import {Icon} from 'react-native-elements';
 import React from 'react';
 import {connect} from 'react-redux';
 import {Video as ExpoVideo} from 'expo-av';
 import {useState, useEffect} from 'react';
 import * as FileSystem from 'expo-file-system';
+import {NavigationParams} from 'react-navigation';
 import {
   Dimensions,
   Button,
@@ -21,7 +21,10 @@ import {StackActions} from 'react-navigation';
 import * as Permissions from 'expo-permissions';
 import {Camera} from 'expo-camera';
 import * as VideoThumbnails from 'expo-video-thumbnails';
-import {FullState, getPatient, store, addMedia} from './state';
+import {RootState, store} from './store';
+import {Media, Patient} from './store/patients/types';
+import {addMedia} from './store/patients/actions';
+import {getPatient} from './store/patients/reducers';
 import {ListItem} from './listitem';
 import {Path, Svg, Defs, Rect, Mask, Circle, G} from 'react-native-svg';
 
@@ -38,7 +41,7 @@ function fileSize(size: number): string {
 
 const storeVideo = async (uri: string, filename: string): Promise<Media> => {
   const info = await FileSystem.getInfoAsync(uri);
-  const size = (info.size !== undefined)?info.size:0
+  const size = info.size !== undefined ? info.size : 0;
 
   const media: Media = {
     filename: filename,
@@ -57,7 +60,7 @@ const SvgMask = (props: SvgMaskProps) => {
   const w = width + 1;
   const h = height;
   const path = `M 0 0 L 0 ${h} L ${w} ${h} L ${w} 0Z`;
-  console.log(w, h);
+  // console.log(w, h);
 
   return (
     <Svg height="100%" width="100%" viewBox={`0 0 ${w} ${h}`}>
@@ -77,8 +80,8 @@ const SvgMask = (props: SvgMaskProps) => {
 };
 
 const CircleMask = () => {
-  const [w, setW] = useState<null|number>(null);
-  const [h, setH] = useState<null|number>(null);
+  const [w, setW] = useState<null | number>(null);
+  const [h, setH] = useState<null | number>(null);
   return (
     <View
       style={StyleSheet.absoluteFill}
@@ -98,8 +101,12 @@ interface AddVideoProps {
 }
 function AddVideoComponent(props: AddVideoProps) {
   const {patient, addMedia} = props;
-  const [hasCameraPermission, setCameraPermission] = useState<boolean|null>(null);
-  const [hasVideoPermission, setVideoPermission] = useState<boolean|null>(null);
+  const [hasCameraPermission, setCameraPermission] = useState<boolean | null>(
+    null,
+  );
+  const [hasVideoPermission, setVideoPermission] = useState<boolean | null>(
+    null,
+  );
   const [flash, setFlash] = useState(Camera.Constants.FlashMode.torch);
   const [type, setType] = useState(Camera.Constants.Type.back);
   const [status, setStatus] = useState<'STILL' | 'RECORDING' | 'SAVING'>(
@@ -198,31 +205,45 @@ function AddVideoComponent(props: AddVideoProps) {
                   setFlash(Camera.Constants.FlashMode.torch);
                 }, 1000);
               }
-              camera.current!.recordAsync({maxDuration: 30}).then(video => {
-                setStatus('SAVING');
-                const timestamp = new Date();
-                const filename = `${timestamp
-                  .toISOString()
-                  .replace(/:/g, '')
-                  .replace(/\./g, '-')}.${extension}`;
-                const directory = `${FileSystem.documentDirectory}${patient.id}/media/`;
-                const uri = `${directory}${filename}`;
-                FileSystem.makeDirectoryAsync(directory, {
-                  intermediates: true,
-                }).then(() => {
-                  FileSystem.copyAsync({from: video.uri, to: uri})
-                    .then(() => {
-                      storeVideo(uri, filename).then(media => {
-                        setStatus('STILL');
-                        addMedia(patient, media);
-                        navigation.goBack();
+              camera
+                .current!.recordAsync({
+                  maxDuration: 30,
+                  quality: '720p',
+                  // mute: true,
+                })
+                .then(video => {
+                  setStatus('SAVING');
+                  const timestamp = new Date();
+                  const filename = `${timestamp
+                    .toISOString()
+                    .replace(/:/g, '')
+                    .replace(/\./g, '-')}.${extension}`;
+                  const directory = `${FileSystem.documentDirectory}${patient.id}/media/`;
+                  const uri = `${directory}${filename}`;
+                  const copy = () => {
+                    FileSystem.copyAsync({from: video.uri, to: uri})
+                      .then(() => {
+                        storeVideo(uri, filename).then(media => {
+                          setStatus('STILL');
+                          addMedia(patient, media);
+                          navigation.goBack();
+                        });
+                      })
+                      .catch(err => {
+                        console.error(`Error copying video. ${err}`);
                       });
-                    })
-                    .catch(err => {
-                      console.error(`Error copying video. ${err}`);
-                    });
+                  };
+
+                  FileSystem.getInfoAsync(directory).then(info => {
+                    if (info.exists) {
+                      copy();
+                    } else {
+                      FileSystem.makeDirectoryAsync(directory, {
+                        intermediates: true,
+                      }).then(copy);
+                    }
+                  });
                 });
-              });
             } else {
               camera.current!.stopRecording();
             }
@@ -240,8 +261,8 @@ function AddVideoComponent(props: AddVideoProps) {
             <Icon
               size={40}
               reverse
-              name="record"
-              type="foundation"
+              name="video-camera"
+              type="entypo"
               color="#c00"
             />
           )}
@@ -250,17 +271,24 @@ function AddVideoComponent(props: AddVideoProps) {
     );
   }
 }
+
+AddVideoComponent.navigationOptions = ({navigation}: NavigationParams) => {
+  return {
+    headerTitle: `Ajout de vidéo`,
+  };
+};
+
 export const AddVideo = connect(
-  (state: FullState) => {
+  (state: RootState) => {
     return {
-      patient: getPatient(state),
+      patient: getPatient(state.patients),
     };
   },
   {addMedia},
 )(AddVideoComponent);
 
 AddVideoComponent.navigationOptions = () => {
-  return {title: "Vidéo de l'oeil"};
+  return {headerTitle: "Vidéo de l'oeil"};
 };
 
 export const PlayVideo = () => {

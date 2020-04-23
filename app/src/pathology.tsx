@@ -1,7 +1,7 @@
 import React from 'react';
 import {ListItem} from './listitem';
 import {Icon} from 'react-native-elements';
-import {Pathology, Patient, pathologyUri} from './patient';
+import {Pathology, Patient, pathologyUri} from './store/patients/types';
 import * as FileSystem from 'expo-file-system';
 import {
   Button,
@@ -12,11 +12,13 @@ import {
   TouchableOpacity,
   Switch,
 } from 'react-native';
-import {NavigationParams} from "react-navigation";
+import {NavigationParams} from 'react-navigation';
 import {connect} from 'react-redux';
 import {useNavigationParam} from 'react-navigation-hooks';
 import {useState, useEffect} from 'react';
-import {FullState, getPatient, store, addPathology} from './state';
+import {RootState} from './store';
+import {getPatient} from './store/patients/reducers';
+import {addPathology} from './store/patients/actions';
 
 async function writePathology(pathology: Pathology, filename: string) {
   FileSystem.writeAsStringAsync(filename, JSON.stringify(pathology));
@@ -28,8 +30,10 @@ interface PathologyProps {
 }
 function PathologyComponent(props: PathologyProps) {
   const {addPathology, patient} = props;
-  const pathology: string = patient.pathology && patient.pathology.pathology || '';
-  const hasUlcer: boolean = patient.pathology && patient.pathology.hasUlcer || false;
+  const pathology: string =
+    (patient.pathology && patient.pathology.pathology) || '';
+  const hasUlcer: boolean =
+    (patient.pathology && patient.pathology.hasUlcer) || false;
   const filename = pathologyUri(patient);
 
   const data = [
@@ -147,9 +151,9 @@ PathologyComponent.navigationOptions = ({navigation}: NavigationParams) => {
 };
 
 export const PathologyDetail = connect(
-  (state: FullState) => {
+  (state: RootState) => {
     return {
-      patient: getPatient(state)
+      patient: getPatient(state.patients),
     };
   },
   {addPathology},

@@ -1,36 +1,45 @@
 import React from 'react';
-import {Patient, loadPatient} from './patient';
+import {Patient, loadPatient} from './store/patients/types';
 import {AppLoading} from 'expo';
 import * as FileSystem from 'expo-file-system';
 import {useNavigation, useNavigationParam} from 'react-navigation-hooks';
 import {Button, Text, FlatList, StyleSheet, View} from 'react-native';
-import {Icon} from 'react-native-elements';
-import {ListItem} from './listitem';
-import {Container} from 'native-base';
-import {
-  store,
-  addPatient,
-  setReady,
-  FullState,
-  State,
-  navigatePatient,
-} from './state';
-import {Thumbnail} from './thumbnail';
-import {connect} from 'react-redux';
 
-// export function Patients(
-//   ready: boolean,
-//   patients: Patient[],
-//   setReady: (patients: Patient[]) => void,
-// ) {
+import {Uploader} from './uploader';
+
+// Necessary to import getRandomValues in react.
+// import 'react-native-get-random-values';
+// import {v4 as uuidv4} from 'uuid';
+// TODO: Waiting on expo to implement correct getRandomValues
+// https://github.com/expo/expo/issues/7209
+// https://github.com/ai/nanoid/issues/207
+// Instead for now taking solution from https://stackoverflow.com/questions/105034/how-to-create-guid-uuid
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = (Math.random() * 16) | 0,
+      v = c == 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+import {Icon} from 'react-native-elements';
+import {connect} from 'react-redux';
+import {Container} from 'native-base';
+
+import {RootState} from './store';
+import {ListItem} from './listitem';
+import {Uuid} from './store/patients/types';
+import {addPatient, setReady, navigatePatient} from './store/patients/actions';
+import {Thumbnail} from './thumbnail';
+
 interface PatientProps {
-  patients: Map<number, Patient>;
+  patients: Map<Uuid, Patient>;
   ready: boolean;
-  setReady: (patients: Map<number, Patient>) => void;
+  setReady: (patients: Map<Uuid, Patient>) => void;
   addPatient: any;
   navigatePatient: any;
 }
-export function Patients(props: PatientProps) {
+export const PatientsComponent = (props: PatientProps) => {
   const {patients, ready, setReady, addPatient, navigatePatient} = props;
   if (!ready) {
     return (
@@ -41,7 +50,7 @@ export function Patients(props: PatientProps) {
           ).then(patientIds => {
             Promise.all(patientIds.map(loadPatient)).then(patients => {
               setReady(
-                new Map<number, Patient>(
+                new Map<Uuid, Patient>(
                   patients.map(patient => [patient.id, patient]),
                 ),
               );
@@ -55,8 +64,8 @@ export function Patients(props: PatientProps) {
   }
 
   const {navigate} = useNavigation();
-  const renderItem = ({item}: {item : Patient}) => {
-    const patient= item;
+  const renderItem = ({item}: {item: Patient}) => {
+    const patient = item;
     return (
       <ListItem
         title={patient.toString()}
@@ -106,35 +115,60 @@ export function Patients(props: PatientProps) {
       />
     );
   };
+  const consentPatients = Array.from(patients.values())
+    .filter(patient => patient.hasConsent())
+    .sort((a, b) =>
+      b.created === null || a.created === null
+        ? 1
+        : b.created.getTime() - a.created.getTime(),
+    );
+
   return (
     <Container>
       <FlatList<Patient>
-        data={Array.from(patients.values())
-          .filter(patient => patient.hasConsent())
-          .sort((a, b) => b.id - a.id)}
+        data={consentPatients}
         renderItem={renderItem}
         keyExtractor={(item, index) => item.id.toString()}
       />
+      <Uploader />
     </Container>
   );
-}
-Patients.navigationOptions = () => {
+};
+PatientsComponent.navigationOptions = () => {
   return {
     headerTitle: 'Patients',
-    headerRight: () => <CAddPatientButton />,
+    headerRight: () => (
+      <>
+        <SettingsButton />
+        <CAddPatientButton />
+      </>
+    ),
   };
 };
 
-export default connect(
-  (state: FullState) => {
-    return {patients: state.state.patients, ready: state.state.ready};
+const SettingsButton = () => {
+  const {navigate} = useNavigation();
+  return (
+    <Icon
+      iconStyle={{margin: 10}}
+      name="setting"
+      type="antdesign"
+      onPress={() => {
+        navigate('Settings');
+      }}
+    />
+  );
+};
+
+export const Patients = connect(
+  (state: RootState) => {
+    return {patients: state.patients.patients, ready: state.patients.ready};
   },
   {setReady, navigatePatient},
-)(Patients);
+)(PatientsComponent);
 
 interface AddPatientButtonProps {
-    newPatientId : number
-    addPatient: typeof addPatient
+  addPatient: typeof addPatient;
 }
 
 const AddPatientButton = (props: AddPatientButtonProps) => {
@@ -146,11 +180,12 @@ const AddPatientButton = (props: AddPatientButtonProps) => {
       name="plus"
       type="antdesign"
       onPress={() => {
-        const newPatientKey = '' + props.newPatientId;
-        const patient = new Patient(props.newPatientId);
-        FileSystem.makeDirectoryAsync(
-          FileSystem.documentDirectory + newPatientKey,
-        ).then(() => {
+        const newPatientId = uuidv4();
+        // console.log('New patient id', newPatientId);
+        const newPatientDir = `${FileSystem.documentDirectory}/${newPatientId}`;
+        const patient = new Patient(newPatientId);
+        patient.created = new Date();
+        FileSystem.makeDirectoryAsync(newPatientDir).then(() => {
           addPatient(patient);
           navigate('Consent');
         });
@@ -158,17 +193,7 @@ const AddPatientButton = (props: AddPatientButtonProps) => {
     />
   );
 };
-const CAddPatientButton = connect(
-  (state: FullState) => {
-    const patientIds = Array.from(state.state.patients.keys());
-    const newPatientId =
-      patientIds.length > 0 ? Math.max(...patientIds) + 1 : 1;
-    return {
-      newPatientId,
-    };
-  },
-  {addPatient},
-)(AddPatientButton);
+const CAddPatientButton = connect(undefined, {addPatient})(AddPatientButton);
 
 const styles = StyleSheet.create({
   container: {

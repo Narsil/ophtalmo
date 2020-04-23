@@ -12,15 +12,16 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import {NavigationParams} from "react-navigation";
+import {NavigationParams} from 'react-navigation';
 import {Video} from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import {Icon} from 'react-native-elements';
 import {connect} from 'react-redux';
 
-import {Media, Pathology, Patient} from './patient';
 import {Thumbnail} from './thumbnail';
-import {FullState, getPatient} from "./state";
+import {RootState} from './store';
+import {getPatient} from './store/patients/reducers';
+import {Media, Pathology, Patient} from './store/patients/types';
 
 interface PatientDetailProps {
   patient: Patient;
@@ -121,25 +122,44 @@ export function PatientDetailComponent(props: PatientDetailProps) {
     </View>
   );
 }
-export const PatientDetail = connect((state: FullState) => {
-  const patient = getPatient(state);
-  return {patient};
-})(PatientDetailComponent);
 
 PatientDetailComponent.navigationOptions = ({navigation}: NavigationParams) => {
   return {
     headerTitle: `Patient`,
     headerRight: () => {
       return (
-        <View style={{flexDirection: 'row'}}>
-          <Icon
-            iconStyle={{margin: 10}}
-            name="file-document-outline"
-            type="material-community"
-            onPress={() => navigation.navigate('Consent')}
-          />
-        </View>
+        <>
+          <ConsentButton />
+          <TouchableOpacity
+            style={{justifyContent: 'center', margin: 10}}
+            onPress={() => {
+              navigation.goBack();
+            }}>
+            <Text
+              style={{
+                fontSize: 24,
+              }}>
+              Ok
+            </Text>
+          </TouchableOpacity>
+        </>
       );
     },
   };
 };
+
+const ConsentButton = () => {
+  const {navigate} = useNavigation();
+  return (
+    <Icon
+      iconStyle={{margin: 10}}
+      name="file-document-outline"
+      type="material-community"
+      onPress={() => navigate('Consent')}
+    />
+  );
+};
+export const PatientDetail = connect((state: RootState) => {
+  const patient = getPatient(state.patients);
+  return {patient};
+})(PatientDetailComponent);
