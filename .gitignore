@@ -16,3 +16,5 @@ server/uploads/
 *__pycache__
 # macOS
 .DS_Store
+server/uploads/
+server/target/
