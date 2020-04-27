@@ -243,6 +243,9 @@ function AddVideoComponent(props: AddVideoProps) {
                       }).then(copy);
                     }
                   });
+                })
+                .catch(err => {
+                  console.error(`Error starting video capture. ${err}`);
                 });
             } else {
               camera.current!.stopRecording();
