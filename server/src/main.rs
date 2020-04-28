@@ -31,7 +31,10 @@ impl fmt::Display for CustomError {
 
 impl ResponseError for CustomError {
     fn error_response(&self) -> HttpResponse {
-        HttpResponse::BadRequest().finish()
+        match self {
+            // CustomError::CantWriteTmpFile => HttpResponse::InternalServerError().finish(),
+            _ => HttpResponse::BadRequest().finish(),
+        }
     }
 }
 
@@ -43,17 +46,19 @@ struct Data {
 
 async fn receive(payload: &mut Multipart) -> Result<Data, Error> {
     let mut patient_bytes = Vec::<u8>::new();
-    let mut tmpfile = web::block(|| tempfile::tempfile()).await.unwrap();
+    let mut tmpfile = web::block(|| tempfile::tempfile()).await?;
     let mut filename = "".to_string();
     let mut file_ok = false;
     let mut patient_ok = false;
     while let Ok(Some(mut field)) = payload.try_next().await {
-        let content_type = field.content_disposition().unwrap();
+        let content_type = field
+            .content_disposition()
+            .ok_or(CustomError::InvalidField)?;
         if let Some(name) = content_type.get_name() {
             match name {
                 "patient" => {
                     while let Some(chunk) = field.next().await {
-                        patient_bytes = chunk.unwrap().to_vec();
+                        patient_bytes = chunk?.to_vec();
                     }
                     patient_ok = true
                 }
@@ -61,7 +66,7 @@ async fn receive(payload: &mut Multipart) -> Result<Data, Error> {
                     if let Some(fname) = content_type.get_filename() {
                         filename = fname.to_string();
                         while let Some(chunk) = field.next().await {
-                            let data = chunk.unwrap();
+                            let data = chunk?;
                             // filesystem operations are blocking, we have to use threadpool
                             tmpfile = web::block(move || tmpfile.write_all(&data).map(|_| tmpfile))
                                 .await?;
@@ -80,7 +85,7 @@ async fn receive(payload: &mut Multipart) -> Result<Data, Error> {
     } else if !patient_ok {
         Err(CustomError::PatientMissing.into())
     } else {
-        let patient = std::str::from_utf8(&patient_bytes).unwrap();
+        let patient = std::str::from_utf8(&patient_bytes)?;
         Ok(Data {
             patient: patient.to_string(),
             tmpfile,
@@ -98,7 +103,7 @@ async fn save_file(mut payload: Multipart) -> Result<HttpResponse, Error> {
     let directory = format!("./uploads/{}", patient);
     let filepath = format!("{}/{}", directory, filename);
     fs::create_dir_all(directory)?;
-    tmpfile.seek(SeekFrom::Start(0)).unwrap();
+    tmpfile.seek(SeekFrom::Start(0))?;
     if Path::new(&filepath).exists() {
         Ok(HttpResponse::Ok().body("Already exists").into())
     } else {
