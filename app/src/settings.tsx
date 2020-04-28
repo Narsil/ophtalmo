@@ -15,18 +15,20 @@ import {
 import {TextInput} from 'react-native-paper';
 
 interface Props {
-  server: string;
+  server: string | null;
   changeServer: typeof changeServer;
 }
 
 const SettingsComponent = (props: Props) => {
   const {server, changeServer} = props;
+  const serverName = server == null ? '' : server;
   return (
     <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
       <View style={{height: 50}}>
         <TextInput
           label="Adresse du Serveur"
-          value={server}
+          value={serverName}
+          style={{minWidth: '100px'}}
           onChangeText={text => changeServer(text)}
           mode="outlined"
           // style={{

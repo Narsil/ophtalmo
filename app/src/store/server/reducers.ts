@@ -7,7 +7,7 @@ import {
 } from './types';
 
 const SERVER_STATE: ServerState = {
-  server: 'http://192.168.0.33:5000',
+  server: null,
   status: Status.Loading,
 };
 
@@ -17,7 +17,8 @@ export const serverReducer = (
 ): ServerState => {
   switch (action.type) {
     case CHANGE_SERVER:
-      return {...state, server: action.payload};
+      const server = action.payload === '' ? null : action.payload;
+      return {...state, server: server};
     case SET_STATUS:
       return {...state, status: action.payload};
     default:

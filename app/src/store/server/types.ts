@@ -4,7 +4,7 @@ export enum Status {
   Offline = 'offline',
 }
 export interface ServerState {
-  server: string;
+  server: string | null;
   status: Status;
 }
 

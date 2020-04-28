@@ -21,7 +21,7 @@ import {deletedPatient, uploadedPatient} from './store/patients/actions';
 type Action = typeof setServerStatus;
 interface Props {
   status: Status;
-  server: string;
+  server: string | null;
   patients: Map<Uuid, Patient>;
   setServerStatus: Action;
   deletedPatient: typeof deletedPatient;
@@ -29,7 +29,11 @@ interface Props {
 
 const CHECK_PERIOD = 10 * 1000; // 10s
 
-function checkServer(server: string, setServerStatus: Action) {
+function checkServer(server: string | null, setServerStatus: Action) {
+  if (server === null) {
+    setServerStatus(Status.Online);
+    return;
+  }
   fetch(server)
     .then(resp => {
       if (resp.status == 200) {
@@ -49,6 +53,10 @@ function sleep(ms: number) {
 }
 async function uploadFile(uri: string, patient: Patient, type: string) {
   const server = store.getState().server.server;
+  if (server === null) {
+    return;
+  }
+
   const formData = new FormData();
   const toks = uri.split('/');
   const filename = toks[toks.length - 1];
@@ -56,18 +64,14 @@ async function uploadFile(uri: string, patient: Patient, type: string) {
   const file = ({uri, name: filename, type} as unknown) as Blob;
   formData.append('file', file);
   formData.append('patient', patient.id);
-  try {
-    await fetch(server, {
-      method: 'POST',
-      body: formData,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-  } catch (e) {
-    console.error(`Error upload file ${uri}: ${e}`);
-  }
+  await fetch(server, {
+    method: 'POST',
+    body: formData,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'multipart/form-data',
+    },
+  });
 }
 
 async function uploadConsent(patient: Patient) {
@@ -186,7 +190,7 @@ export const UploaderComponent = (props: Props) => {
     },
   );
   const isEmpty = upload_patients.length === 0;
-  if (isEmpty) {
+  if (server === null || isEmpty) {
     return <></>;
   }
   const {progress, msg} = checkUpload(server, upload_patients);
