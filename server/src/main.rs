@@ -95,7 +95,7 @@ async fn save_file(mut payload: Multipart) -> Result<HttpResponse, Error> {
     let patient = data.patient;
     let filename = data.filename;
     let mut tmpfile = data.tmpfile;
-    let directory = format!("./uploads/{}", patient);
+    let directory = format!("/home/yr/uploads/{}", patient);
     let filepath = format!("{}/{}", directory, filename);
     fs::create_dir_all(directory)?;
     tmpfile.seek(SeekFrom::Start(0)).unwrap();
