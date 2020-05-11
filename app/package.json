@@ -41,6 +41,7 @@
     "redux": "^4.0.5",
     "redux-thunk": "^2.3.0",
     "remove": "^0.1.5",
+    "sharp-cli": "^1.13.1",
     "uuid": "^7.0.3"
   },
   "devDependencies": {
