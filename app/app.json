@@ -3,12 +3,8 @@
     "name": "Ophtalmologie",
     "slug": "ophtalmo",
     "privacy": "unlisted",
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ],
-    "version": "1.0.1",
+    "platforms": ["ios", "android", "web"],
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
     "splash": {
@@ -19,16 +15,12 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.ophtalmo.ophtalmo",
       "infoPlist": {
-        "UIBackgroundModes": [
-          "fetch"
-        ]
+        "UIBackgroundModes": ["fetch"]
       }
     },
     "android": {
