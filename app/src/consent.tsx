@@ -125,8 +125,9 @@ function ConsentComponent(props: ConsentProps) {
           margin: 40,
           padding: 10,
         }}>
-        Je consens à ce que mes données soient utilisées pour aider à mon
-        diagnostic.
+        Je consens à ce que mes données soient utilisée pour la recherche
+        intitulée RED-AI, selon les modalités qui m’ont été transmises dans la
+        note d’information.
       </Text>
     </View>
   );

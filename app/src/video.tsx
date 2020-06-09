@@ -66,8 +66,14 @@ const SvgMask = (props: SvgMaskProps) => {
     <Svg height="100%" width="100%" viewBox={`0 0 ${w} ${h}`}>
       <Defs>
         <Mask id="mask">
-          <Path d={path} fill="#fff" />
-          <Circle r={`${w / 2}`} cx={`${w / 2}`} cy={`${w / 2}`} />
+          <Path d={path} fill="#000" />
+          <Circle
+            r={`${w / 2 + 100}`}
+            cx={`${w / 2}`}
+            cy={`${w / 2}`}
+            stroke="#fff"
+            strokeWidth="200"
+          />
         </Mask>
       </Defs>
       <Path d={path} fill="black" mask="url(#mask)" />
@@ -143,7 +149,7 @@ function AddVideoComponent(props: AddVideoProps) {
           flashMode={flash}
           autoFocus={Camera.Constants.AutoFocus.on}
         />
-        <CircleMask />
+        {/*<CircleMask />*/}
         <TouchableOpacity
           style={{
             position: 'absolute',

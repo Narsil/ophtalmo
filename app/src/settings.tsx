@@ -28,7 +28,7 @@ const SettingsComponent = (props: Props) => {
         <TextInput
           label="Adresse du Serveur"
           value={serverName}
-          style={{minWidth: '100px'}}
+          style={{minWidth: 100}}
           onChangeText={text => changeServer(text)}
           mode="outlined"
           // style={{

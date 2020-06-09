@@ -85,7 +85,7 @@ export const patientsReducer = (
       }
       var newPats = new Map(state.patients);
       newPats.set(action.patient.id, action.patient);
-      console.log('ADD_PATIENT', newPats, action.patient.id);
+      // console.log('ADD_PATIENT', newPats, action.patient.id);
       return {...state, patients: newPats, patientId: action.patient.id};
     //
     case NAVIGATE_PATIENT:
@@ -137,7 +137,7 @@ export const patientsReducer = (
       const newPatient = patientReducer(patient, action);
       const newPatients = new Map(state.patients);
       newPatients.set(newPatient.id, newPatient);
-      console.log('Uploaded ', newPatients);
+      // console.log('Uploaded ', newPatients);
       return {...state, patients: newPatients};
     default:
       break;

@@ -190,7 +190,7 @@ export const UploaderComponent = (props: Props) => {
     },
   );
   const isEmpty = upload_patients.length === 0;
-  if (server === null || isEmpty) {
+  if (isEmpty) {
     return <></>;
   }
   const {progress, msg} = checkUpload(server, upload_patients);
