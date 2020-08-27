@@ -1,160 +1,197 @@
-import React from 'react';
-import {ListItem} from './listitem';
-import {Icon} from 'react-native-elements';
-import {Pathology, Patient, pathologyUri} from './store/patients/types';
-import * as FileSystem from 'expo-file-system';
+import React from "react";
+import { ListItem } from "./listitem";
+import { Icon } from "react-native-elements";
+import { Pathology, Patient, infoUri } from "./store/patients/types";
+import * as FileSystem from "expo-file-system";
 import {
-  Button,
-  Text,
-  FlatList,
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  Switch,
-} from 'react-native';
-import {NavigationParams} from 'react-navigation';
-import {connect} from 'react-redux';
-import {useNavigationParam} from 'react-navigation-hooks';
-import {useState, useEffect} from 'react';
-import {RootState} from './store';
-import {getPatient} from './store/patients/reducers';
-import {addPathology} from './store/patients/actions';
-
-async function writePathology(pathology: Pathology, filename: string) {
-  FileSystem.writeAsStringAsync(filename, JSON.stringify(pathology));
-}
+    Button,
+    Text,
+    FlatList,
+    StyleSheet,
+    View,
+    TouchableOpacity,
+    Switch
+} from "react-native";
+import { NavigationParams } from "react-navigation";
+import { connect } from "react-redux";
+import { useNavigationParam } from "react-navigation-hooks";
+import { useState, useEffect } from "react";
+import { RootState } from "./store";
+import { getPatient } from "./store/patients/reducers";
+import { addInfo } from "./store/patients/actions";
+import { writeInfo } from "./utils";
 
 interface PathologyProps {
-  patient: Patient;
-  addPathology: (patient: Patient, pathology: Pathology) => void;
+    patient: Patient;
+    addInfo: (patient: Patient, pathology: Pathology) => void;
 }
 function PathologyComponent(props: PathologyProps) {
-  const {addPathology, patient} = props;
-  const pathology: string =
-    (patient.pathology && patient.pathology.pathology) || '';
-  const hasUlcer: boolean =
-    (patient.pathology && patient.pathology.hasUlcer) || false;
-  const filename = pathologyUri(patient);
+    const { addInfo, patient } = props;
 
-  const data = [
-    'Chalazion',
-    'Blepharite',
-    'Allergie',
-    'Uvéite',
-    'Conjonctivite allergique',
-    'conjonctivite infectieuse',
-    'Conjonctivite indéterminée',
-    'Episclerite/sclérite',
-    'Pingueculite',
-    'Pterygion',
-    'Hémorragie sous conjonctivale',
-    'Abcès',
-    'Endophtalmie',
-    'Herpès/zona épithélia',
-    'Uniquement ulcère',
-    'Autre',
-  ];
-  return (
-    <View style={{flex: 1}}>
-      <FlatList
-        data={data}
-        renderItem={({item}) => (
-          <ListItem
-            title={item}
-            renderIcon={() =>
-              item === pathology ? (
-                <Icon name="radio-button-checked" type="material" />
-              ) : (
-                <Icon name="radio-button-unchecked" type="material" />
-              )
-            }
-            onPress={() => {
-              const path = {pathology: item, hasUlcer: hasUlcer};
-              writePathology(path, filename).then(() => {
-                addPathology(patient, path);
-              });
-              // setUlcer(value);
-            }}
-          />
-        )}
-        keyExtractor={(item, index) => item.toString()}
-      />
-      <View
-        style={{
-          height: 70,
-          padding: 5,
-          justifyContent: 'center',
-          backgroundColor: '#fff',
-          borderTopColor: '#ccc',
-          borderTopWidth: 2,
-        }}>
-        <TouchableOpacity
-          style={{
-            flex: 1,
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignContent: 'center',
-          }}
-          onPress={() => {
-            const value = !hasUlcer;
-            const path = {pathology: pathology || '', hasUlcer: value};
-            writePathology(path, filename).then(() => {
-              addPathology(patient, path);
-            });
-          }}>
-          <Text
-            style={{
-              flex: 1,
-              fontWeight: 'bold',
-              fontSize: 24,
-              alignSelf: 'center',
-            }}>
-            Avec ulcère
-          </Text>
-          <Switch
-            style={{
-              alignSelf: 'center',
-            }}
-            value={hasUlcer}
-            onValueChange={value => {
-              const path = {pathology: pathology || '', hasUlcer: value};
-              writePathology(path, filename).then(() => {
-                addPathology(patient, path);
-              });
-            }}
-          />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    if (patient.info === null) {
+        const info = {
+            questions: null,
+            pathology: { pathology: null, hasUlcer: false }
+        };
+        addInfo(patient, info);
+        return;
+    }
+    const pathology: string =
+        (patient.info &&
+            patient.info.pathology &&
+            patient.info.pathology.pathology) ||
+        "";
+    const hasUlcer: boolean =
+        (patient.info &&
+            patient.info.pathology &&
+            patient.info.pathology.hasUlcer) ||
+        false;
+    const filename = infoUri(patient);
+
+    const data = [
+        "Chalazion",
+        "Blepharite",
+        "Allergie",
+        "Uvéite",
+        "Conjonctivite allergique",
+        "conjonctivite infectieuse",
+        "Conjonctivite indéterminée",
+        "Episclerite/sclérite",
+        "Pingueculite",
+        "Pterygion",
+        "Hémorragie sous conjonctivale",
+        "Abcès",
+        "Endophtalmie",
+        "Herpès/zona épithélia",
+        "Uniquement ulcère",
+        "Autre"
+    ];
+    return (
+        <View style={{ flex: 1 }}>
+            <FlatList
+                data={data}
+                renderItem={({ item }) => (
+                    <ListItem
+                        title={item}
+                        renderIcon={() =>
+                            item === pathology ? (
+                                <Icon
+                                    name="radio-button-checked"
+                                    type="material"
+                                />
+                            ) : (
+                                <Icon
+                                    name="radio-button-unchecked"
+                                    type="material"
+                                />
+                            )
+                        }
+                        onPress={() => {
+                            const pathology = {
+                                pathology: null,
+                                hasUlcer: false
+                            };
+                            if (patient.info === null) {
+                                patient.info = {
+                                    pathology: pathology
+                                };
+                            }
+                            if (patient.info.pathology === null) {
+                                patient.info.pathology = pathology;
+                            }
+                            const info = { ...patient.info };
+                            info.pathology.pathology = item;
+                            writeInfo(info, filename).then(() => {
+                                addInfo(patient, info);
+                            });
+                            // setUlcer(value);
+                        }}
+                    />
+                )}
+                keyExtractor={(item, index) => item.toString()}
+            />
+            <View
+                style={{
+                    height: 70,
+                    padding: 5,
+                    justifyContent: "center",
+                    backgroundColor: "#fff",
+                    borderTopColor: "#ccc",
+                    borderTopWidth: 2
+                }}
+            >
+                <TouchableOpacity
+                    style={{
+                        flex: 1,
+                        flexDirection: "row",
+                        justifyContent: "center",
+                        alignContent: "center"
+                    }}
+                    onPress={() => {
+                        const info = { ...patient.info };
+                        info.pathology.hasUlcer = !hasUlcer;
+                        writeInfo(info, filename).then(() => {
+                            addInfo(patient, info);
+                        });
+                    }}
+                >
+                    <Text
+                        style={{
+                            flex: 1,
+                            fontWeight: "bold",
+                            fontSize: 24,
+                            alignSelf: "center"
+                        }}
+                    >
+                        Avec ulcère
+                    </Text>
+                    <Switch
+                        style={{
+                            alignSelf: "center"
+                        }}
+                        value={hasUlcer}
+                        onValueChange={value => {
+                            const info = { ...patient.info };
+                            info.pathology.hasUlcer = value;
+                            writeInfo(info, filename).then(() => {
+                                addInfo(patient, info);
+                            });
+                        }}
+                    />
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
 }
-PathologyComponent.navigationOptions = ({navigation}: NavigationParams) => {
-  return {
-    headerTitle: 'Pathologie',
-    headerRight: () => {
-      return (
-        <TouchableOpacity
-          style={{justifyContent: 'center', margin: 10}}
-          onPress={() => {
-            navigation.goBack();
-          }}>
-          <Text
-            style={{
-              fontSize: 24,
-            }}>
-            Ok
-          </Text>
-        </TouchableOpacity>
-      );
-    },
-  };
+PathologyComponent.navigationOptions = ({ navigation }: NavigationParams) => {
+    return {
+        headerTitle: "Pathologie",
+        headerRight: () => {
+            return (
+                <TouchableOpacity
+                    style={{ justifyContent: "center", margin: 10 }}
+                    onPress={() => {
+                        navigation.goBack();
+                    }}
+                >
+                    <Text
+                        style={{
+                            fontSize: 24
+                        }}
+                    >
+                        Ok
+                    </Text>
+                </TouchableOpacity>
+            );
+        }
+    };
 };
 
 export const PathologyDetail = connect(
-  (state: RootState) => {
-    return {
-      patient: getPatient(state.patients),
-    };
-  },
-  {addPathology},
+    (state: RootState) => {
+        return {
+            patient: getPatient(state.patients)
+        };
+    },
+    { addInfo }
 )(PathologyComponent);
