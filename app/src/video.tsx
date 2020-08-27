@@ -221,8 +221,8 @@ function AddVideoComponent(props: AddVideoProps) {
                             camera
                                 .current!.recordAsync({
                                     maxDuration: 30,
-                                    quality: "720p"
-                                    // mute: true,
+                                    quality: "720p",
+                                    mute: true
                                 })
                                 .then(video => {
                                     setStatus("SAVING");
