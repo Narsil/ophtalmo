@@ -75,7 +75,8 @@ function QuestionsComponent(props: QuestionsProps) {
         );
     };
 
-    const data = QUESTIONS.map(question_item => {
+    const data = QUESTIONS.map(item => {
+        const question_item = { ...item };
         if (patient.info !== null && patient.info.questions !== null) {
             question_item.value = patient.info.questions[question_item.key];
         }
