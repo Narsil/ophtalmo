@@ -18,3 +18,4 @@ server/uploads/
 .DS_Store
 server/uploads/
 server/target/
+app/.password

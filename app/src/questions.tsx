@@ -61,7 +61,10 @@ function QuestionsComponent(props: QuestionsProps) {
                     onValueChange={value => {
                         const info = patient.info
                             ? { ...patient.info }
-                            : { questions: defaultQuestions, pathology: null };
+                            : {
+                                  questions: { ...defaultQuestions },
+                                  pathology: null
+                              };
                         info.questions[item.key] = value;
                         writeInfo(info, filename).then(() => {
                             addInfo(patient, info);
