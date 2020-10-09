@@ -95,11 +95,7 @@ async function uploadMedia(patient: Patient) {
 }
 
 function isNewPatient(patient: Patient): boolean {
-    const now = new Date();
-    return !(
-        patient.created !== null &&
-        now.getTime() - patient.created.getTime() > 600 * 1000
-    );
+    return patient.created === null;
 }
 
 async function upload(patient: Patient) {
@@ -117,7 +113,7 @@ async function upload(patient: Patient) {
     store.dispatch(uploadedPatient(patient));
 }
 
-function checkUpload(server: string, patients: Patient[]) {
+function checkUpload(patients: Patient[]) {
     const to_upload_patients = patients.filter(patient => !patient.uploaded);
     if (to_upload_patients.length > 0) {
         setTimeout(() => {
@@ -185,7 +181,7 @@ export const UploaderComponent = (props: Props) => {
     if (isEmpty) {
         return <></>;
     }
-    const { progress, msg } = checkUpload(server, upload_patients);
+    const { progress, msg } = checkUpload(upload_patients);
 
     const cleanUploaded = () => {
         Alert.alert(
