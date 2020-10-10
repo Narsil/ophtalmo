@@ -10,7 +10,7 @@ import {
     DELETED_PATIENT,
     UPLOADED_PATIENT,
     SET_READY,
-    Uuid
+    Uuid,
 } from "./types";
 
 export function copyPatient(other: Patient) {
@@ -26,7 +26,7 @@ export function copyPatient(other: Patient) {
 const INITIAL_STATE = {
     ready: false,
     patients: new Map<Uuid, Patient>(),
-    patientId: null
+    patientId: null,
 };
 
 export function getPatient(state: PatientsState): Patient {
@@ -83,7 +83,7 @@ export const patientsReducer = (
             return {
                 ...state,
                 patients: newPats,
-                patientId: action.patient.id
+                patientId: action.patient.id,
             };
         //
         case NAVIGATE_PATIENT:
@@ -95,7 +95,7 @@ export const patientsReducer = (
             return {
                 ...state,
                 patients: action.patients,
-                ready: true
+                ready: true,
             };
         case DELETED_PATIENT:
             const patient_to_delete = state.patients.get(action.patient.id);

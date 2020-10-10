@@ -13,7 +13,7 @@ import {
     Uuid,
     Patient,
     directory,
-    Media
+    Media,
 } from "./store/patients/types";
 import { deletedPatient, uploadedPatient } from "./store/patients/actions";
 
@@ -34,21 +34,21 @@ function checkServer(server: string | null, setServerStatus: Action) {
         return;
     }
     fetch(server)
-        .then(resp => {
+        .then((resp) => {
             if (resp.status == 200) {
                 setServerStatus(Status.Online);
             } else {
                 setServerStatus(Status.Offline);
             }
         })
-        .catch(err => {
+        .catch((err) => {
             console.log("Error", err);
             setServerStatus(Status.Offline);
         });
 }
 
 function sleep(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 async function uploadFile(uri: string, patient: Patient, type: string) {
     const server = store.getState().server.server;
@@ -68,8 +68,8 @@ async function uploadFile(uri: string, patient: Patient, type: string) {
         body: formData,
         headers: {
             Accept: "application/json",
-            "Content-Type": "multipart/form-data"
-        }
+            "Content-Type": "multipart/form-data",
+        },
     });
 }
 
@@ -87,7 +87,7 @@ async function uploadSingleMedia(patient: Patient, media: Media) {
 async function uploadMedia(patient: Patient) {
     if (patient.hasMedia()) {
         await Promise.all(
-            patient.media.map(async medium => {
+            patient.media.map(async (medium) => {
                 uploadSingleMedia(patient, medium);
             })
         );
@@ -99,14 +99,6 @@ function isNewPatient(patient: Patient): boolean {
 }
 
 async function upload(patient: Patient) {
-    // console.log(patient);
-    // Check if patient was created more than 10mn ago.
-    if (!patient.hasQuestions() && !isNewPatient(patient)) {
-        const dir = directory(patient);
-        FileSystem.deleteAsync(dir).then(() => {
-            store.dispatch(deletedPatient(patient));
-        });
-    }
     console.log("Starting to upload", new Date());
     await Promise.all([uploadPathology(patient), uploadMedia(patient)]);
     console.log("Upload finished", new Date());
@@ -114,7 +106,7 @@ async function upload(patient: Patient) {
 }
 
 function checkUpload(patients: Patient[]) {
-    const to_upload_patients = patients.filter(patient => !patient.uploaded);
+    const to_upload_patients = patients.filter((patient) => !patient.uploaded);
     if (to_upload_patients.length > 0) {
         setTimeout(() => {
             const patient = to_upload_patients[0];
@@ -163,7 +155,7 @@ export const UploaderComponent = (props: Props) => {
                     style={{
                         flex: 1,
                         justifyContent: "center",
-                        alignItems: "center"
+                        alignItems: "center",
                     }}
                 >
                     <Text>{text}</Text>
@@ -191,7 +183,7 @@ export const UploaderComponent = (props: Props) => {
                 {
                     text: "Cancel",
                     onPress: () => console.log("Cancel Pressed"),
-                    style: "cancel"
+                    style: "cancel",
                 },
                 {
                     text: "OK",
@@ -208,8 +200,8 @@ export const UploaderComponent = (props: Props) => {
                                 }
                             }
                         );
-                    }
-                }
+                    },
+                },
             ],
             { cancelable: false }
         );
@@ -221,7 +213,7 @@ export const UploaderComponent = (props: Props) => {
                     flex: 1,
                     flexDirection: "row",
                     alignItems: "center",
-                    justifyContent: "center"
+                    justifyContent: "center",
                 }}
             >
                 <Button
@@ -245,7 +237,7 @@ export const Uploader = connect(
         return {
             status: state.server.status,
             server: state.server.server,
-            patients: state.patients.patients
+            patients: state.patients.patients,
         };
     },
     { setServerStatus, deletedPatient }

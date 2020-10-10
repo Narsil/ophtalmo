@@ -34,7 +34,7 @@ import { Uuid } from "./store/patients/types";
 import {
     addPatient,
     setReady,
-    navigatePatient
+    navigatePatient,
 } from "./store/patients/actions";
 import { Thumbnail } from "./thumbnail";
 
@@ -53,14 +53,14 @@ export const PatientsComponent = (props: PatientProps) => {
                 startAsync={() => {
                     return FileSystem.readDirectoryAsync(
                         FileSystem.documentDirectory!
-                    ).then(patientIds => {
+                    ).then((patientIds) => {
                         Promise.all(patientIds.map(loadPatient)).then(
-                            patients => {
+                            (patients) => {
                                 setReady(
                                     new Map<Uuid, Patient>(
-                                        patients.map(patient => [
+                                        patients.map((patient) => [
                                             patient.id,
-                                            patient
+                                            patient,
                                         ])
                                     )
                                 );
@@ -86,7 +86,7 @@ export const PatientsComponent = (props: PatientProps) => {
                         <View
                             style={{
                                 flexDirection: "row",
-                                justifyContent: "center"
+                                justifyContent: "center",
                             }}
                         >
                             <Icon
@@ -107,7 +107,7 @@ export const PatientsComponent = (props: PatientProps) => {
                                         height: 60,
                                         width: 60,
                                         flex: 1,
-                                        margin: 5
+                                        margin: 5,
                                     }}
                                     source={{ uri: patient.media[0].uri }}
                                 />
@@ -122,7 +122,7 @@ export const PatientsComponent = (props: PatientProps) => {
                                     flex: 1,
                                     margin: 5,
                                     alignContent: "center",
-                                    justifyContent: "center"
+                                    justifyContent: "center",
                                 }}
                             >
                                 <Icon
@@ -142,7 +142,7 @@ export const PatientsComponent = (props: PatientProps) => {
         );
     };
     const questionsPatients = Array.from(patients.values())
-        .filter(patient => patient.hasQuestions())
+        .filter((patient) => patient.hasQuestions())
         .sort((a, b) =>
             b.created === null || a.created === null
                 ? 1
@@ -168,7 +168,7 @@ PatientsComponent.navigationOptions = () => {
                 <SettingsButton />
                 <CAddPatientButton />
             </>
-        )
+        ),
     };
 };
 
@@ -190,7 +190,7 @@ export const Patients = connect(
     (state: RootState) => {
         return {
             patients: state.patients.patients,
-            ready: state.patients.ready
+            ready: state.patients.ready,
         };
     },
     { setReady, navigatePatient }
@@ -229,6 +229,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "#fff",
         alignItems: "center",
-        justifyContent: "center"
-    }
+        justifyContent: "center",
+    },
 });
