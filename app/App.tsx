@@ -14,6 +14,7 @@ import { PlayVideo, AddVideo } from "./src/video";
 import { PathologyDetail } from "./src/pathology";
 import { Patients } from "./src/patients";
 import { QuestionsItem } from "./src/questions";
+import { InclusionItem } from "./src/inclusion";
 import { store } from "./src/store";
 import { PatientDetail } from "./src/patient-detail";
 import { Settings } from "./src/settings";
@@ -22,14 +23,15 @@ const MainNavigator = createStackNavigator(
     {
         Patients: {
             screen: Patients,
-            navigationOptions: { headerTitle: "Patients" }
+            navigationOptions: { headerTitle: "Patients" },
         },
         PatientDetail: { screen: PatientDetail },
         Questions: { screen: QuestionsItem },
+        Inclusion: { screen: InclusionItem },
         AddVideo: { screen: AddVideo },
         PlayVideo: { screen: PlayVideo },
         Settings: { screen: Settings },
-        PathologyDetail: { screen: PathologyDetail }
+        PathologyDetail: { screen: PathologyDetail },
     },
     { initialRouteName: "Patients" }
 );

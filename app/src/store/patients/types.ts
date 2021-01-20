@@ -78,6 +78,7 @@ export interface Media {
 export interface Info {
     pathology: Pathology | null;
     questions: Questions | null;
+    inclusion: Inclusion | null;
 }
 
 export interface Questions {
@@ -87,6 +88,11 @@ export interface Questions {
     impaired_vision: boolean;
     wears_lenses: boolean;
     is_bilateral: boolean;
+}
+
+export interface Inclusion {
+    inclusion_number: string;
+    accepted: boolean;
 }
 
 export interface Pathology {
@@ -127,7 +133,7 @@ export async function loadPatient(patientId: Uuid): Promise<Patient> {
                         filename: filename,
                         uri: uri,
                         timestamp: timestamp,
-                        size: info.size
+                        size: info.size,
                     };
                     patient.media.push(media);
                 }
@@ -141,6 +147,7 @@ export async function loadPatient(patientId: Uuid): Promise<Patient> {
 export const ADD_MEDIA = "ADD_MEDIA";
 export const ADD_PATHOLOGY = "ADD_PATHOLOGY";
 export const ADD_INFO = "ADD_INFO";
+export const ADD_QUESTIONS = "ADD_QUESTIONS";
 export const ADD_PATIENT = "ADD_PATIENT";
 export const SET_READY = "SET_READY";
 export const NAVIGATE_PATIENT = "NAVIGATE_PATIENT";
@@ -177,6 +184,10 @@ interface AddQuestionsAction extends BasePatientAction {
     type: typeof ADD_QUESTIONS;
     uri: string;
 }
+interface PathologyAction extends BasePatientAction {
+    type: typeof ADD_PATHOLOGY;
+    uri: string;
+}
 interface DeletedPatientAction extends BasePatientAction {
     type: typeof DELETED_PATIENT;
 }
@@ -187,7 +198,7 @@ interface UploadedPatientAction extends BasePatientAction {
 export type PatientActionType =
     | AddQuestionsAction
     | MediaAction
-    | QuestionsAction
+    | AddQuestionsAction
     | DeletedPatientAction
     | UploadedPatientAction
     | PathologyAction;

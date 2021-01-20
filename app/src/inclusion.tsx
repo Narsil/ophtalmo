@@ -7,6 +7,7 @@ import { NavigationParams } from "react-navigation";
 import {
     Button,
     Text,
+    TextInput,
     FlatList,
     StyleSheet,
     View,
@@ -21,95 +22,102 @@ import { RootState } from "./store";
 import { addInfo } from "./store/patients/actions";
 import { writeInfo } from "./utils";
 import { getPatient } from "./store/patients/reducers";
-import { Questions } from "./store/patients/types";
+import { Inclusion } from "./store/patients/types";
 
-interface QuestionsProps {
+interface InclusionProps {
     addInfo: (patient: Patient, uri: string) => void;
     patient: Patient;
 }
 
-const QUESTIONS = [
-    { id: 0, question: "Démangeaisons ?", key: "itching" },
-    { id: 1, question: "Yeux collés au réveil ?", key: "morning_stuck_eyes" },
-    { id: 2, question: "Douleurs ?", key: "pain" },
-    { id: 3, question: "Baisse de vision ?", key: "impaired_vision" },
-    { id: 4, question: "Port de lentilles ?", key: "wears_lenses" },
-    { id: 5, question: "Bilatéral ?", key: "is_bilateral" },
-];
+function default_inclusion(): Inclusion {
+    return {
+        inclusion_number: "",
+        accepted: false,
+    };
+}
 
-const defaultQuestions: Questions = {
-    itching: false,
-    morning_stuck_eyes: false,
-    pain: false,
-    impaired_vision: false,
-    wears_lenses: false,
-    is_bilateral: false,
-};
-
-function QuestionsComponent(props: QuestionsProps) {
+function InclusionComponent(props: InclusionProps) {
     const { patient, addInfo } = props;
     const filename = infoUri(patient);
     const navigation = useNavigation();
 
-    const renderItem = ({ item }) => {
-        return (
-            <View style={styles.item}>
-                <Text style={styles.text}>{item.question}</Text>
-                <Switch
-                    style={styles.switch}
-                    value={item.value}
-                    onValueChange={(value) => {
+    const inclusion = patient.info?.inclusion;
+    const inclusion_number: string =
+        inclusion != null ? inclusion.inclusion_number : "e23";
+    const accepted: boolean = inclusion != null ? inclusion.accepted : false;
+
+    return (
+        <View style={styles.container}>
+            <View>
+                <TextInput
+                    value={inclusion_number}
+                    onChangeText={(value) => {
                         const info = patient.info
                             ? { ...patient.info }
                             : {
-                                  inclusion: null,
-                                  questions: { ...defaultQuestions },
+                                  questions: null,
                                   pathology: null,
+                                  inclusion: default_inclusion(),
                               };
-                        info.questions[item.key] = value;
+                        if (info.inclusion === null) {
+                            info.inclusion = default_inclusion();
+                        }
+                        info.inclusion.inclusion_number = value;
                         writeInfo(info, filename).then(() => {
                             addInfo(patient, info);
                         });
                     }}
                 />
             </View>
-        );
-    };
-
-    const data = QUESTIONS.map((item) => {
-        const question_item = { ...item };
-        if (patient.info !== null && patient.info.questions !== null) {
-            question_item.value = patient.info.questions[question_item.key];
-        }
-        return question_item;
-    });
-
-    return (
-        <View style={styles.container}>
-            <FlatList
-                data={data}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.id.toString()}
-            />
+            <View>
+                <Text>
+                    J’accepte l’utilisation des images et données recueillies
+                    dans le cadre des études ultérieures de perfectionnement de
+                    cet algorithme
+                </Text>
+                <Switch
+                    style={styles.switch}
+                    value={accepted}
+                    onValueChange={(value) => {
+                        const info = patient.info
+                            ? { ...patient.info }
+                            : {
+                                  inclusion: {
+                                      inclusion_number: 0,
+                                      accepted: false,
+                                  },
+                                  questions: null,
+                                  pathology: null,
+                              };
+                        if (info.inclusion === null) {
+                            info.inclusion = default_inclusion();
+                        }
+                        info.inclusion.accepted = value;
+                        writeInfo(info, filename).then(() => {
+                            addInfo(patient, info);
+                        });
+                    }}
+                />
+            </View>
         </View>
     );
 }
 
-QuestionsComponent.navigationOptions = ({ navigation }: NavigationParams) => {
+InclusionComponent.navigationOptions = ({ navigation }: NavigationParams) => {
     return {
-        headerTitle: `Questions`,
+        headerTitle: `Inclusion`,
         headerRight: () => {
             return <ValidateButton />;
         },
     };
 };
-export const QuestionsItem = connect(
+export const InclusionItem = connect(
     (state: RootState) => {
         const patient = getPatient(state.patients);
         return { patient };
     },
     { addInfo }
-)(QuestionsComponent);
+)(InclusionComponent);
 
 const ValidateButtonComponent = (props: { patient: Patient }) => {
     const { patient } = props;

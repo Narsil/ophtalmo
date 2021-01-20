@@ -216,7 +216,7 @@ const AddPatientButton = (props: AddPatientButtonProps) => {
                 patient.created = new Date();
                 FileSystem.makeDirectoryAsync(newPatientDir).then(() => {
                     addPatient(patient);
-                    navigate("Questions");
+                    navigate("Inclusion");
                 });
             }}
         />
