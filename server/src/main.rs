@@ -104,15 +104,11 @@ async fn save_file(mut payload: Multipart) -> Result<HttpResponse, Error> {
     let filepath = format!("{}/{}", directory, filename);
     fs::create_dir_all(directory)?;
     tmpfile.seek(SeekFrom::Start(0))?;
-    if Path::new(&filepath).exists() {
-        Ok(HttpResponse::Ok().body("Already exists").into())
-    } else {
-        let mut writer = fs::File::create(&filepath)?;
-        let perm = tmpfile.metadata()?.permissions();
-        io::copy(&mut tmpfile, &mut writer)?;
-        fs::set_permissions(filepath, perm)?;
-        Ok(HttpResponse::Ok().body("Ok").into())
-    }
+    let mut writer = fs::File::create(&filepath)?;
+    let perm = tmpfile.metadata()?.permissions();
+    io::copy(&mut tmpfile, &mut writer)?;
+    fs::set_permissions(filepath, perm)?;
+    Ok(HttpResponse::Ok().body("Ok").into())
 }
 
 fn index() -> HttpResponse {
