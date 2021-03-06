@@ -110,14 +110,9 @@ const ValidateButtonComponent = (props: { patient: Patient }) => {
                 onPress={() => {
                     navigation.dispatch(
                         StackActions.replace({
-                            routeName: "PatientDetail"
+                            routeName: "Questions"
                         })
                     );
-                    if (!patient.hasMedia()) {
-                        navigation.dispatch(
-                            StackActions.push({ routeName: "Questions" })
-                        );
-                    }
                 }}
             >
                 <Text

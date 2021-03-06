@@ -58,7 +58,6 @@ async function uploadFile(uri: string, patient: Patient, type: string) {
 
     const info = await FileSystem.getInfoAsync(uri);
     if (!info.exists) {
-        console.warn(`File ${uri} does not exist`);
         return;
     }
 
