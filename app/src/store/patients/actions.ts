@@ -2,13 +2,14 @@ import {
     Patient,
     Media,
     Pathology,
-    Questions,
+    Info,
     ADD_PATIENT,
     SET_READY,
     DELETED_PATIENT,
     UPLOADED_PATIENT,
     ADD_MEDIA,
     ADD_INFO,
+    ADD_INCLUSION,
     NAVIGATE_PATIENT,
     PatientsActionType,
     PatientActionType,
@@ -43,7 +44,6 @@ export function addInfo(patient: Patient, info: Info): PatientsActionType {
         info: info
     };
 }
-
 export function deletedPatient(patient: Patient): PatientsActionType {
     return {
         type: DELETED_PATIENT,

@@ -146,6 +146,7 @@ PatientDetailComponent.navigationOptions = ({
         headerRight: () => {
             return (
                 <>
+                    <InclusionButton />
                     <QuestionsButton />
                     <TouchableOpacity
                         style={{ justifyContent: "center", margin: 10 }}
@@ -175,6 +176,17 @@ const QuestionsButton = () => {
             name="file-document-outline"
             type="material-community"
             onPress={() => navigate("Questions")}
+        />
+    );
+};
+const InclusionButton = () => {
+    const { navigate } = useNavigation();
+    return (
+        <Icon
+            iconStyle={{ margin: 10 }}
+            name="file-document-outline"
+            type="material-community"
+            onPress={() => navigate("Inclusion")}
         />
     );
 };

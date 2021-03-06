@@ -1,5 +1,6 @@
 import React from "react";
 import { NavigationParams } from "react-navigation";
+import * as FileSystem from "expo-file-system";
 import { connect } from "react-redux";
 import { RootState } from "./store";
 import { changeServer } from "./store/server/actions";
@@ -10,7 +11,7 @@ import {
     StyleSheet,
     View,
     TouchableOpacity,
-    Switch,
+    Switch
 } from "react-native";
 import { TextInput } from "react-native-paper";
 
@@ -28,15 +29,19 @@ const SettingsComponent = (props: Props) => {
                 <TextInput
                     label="Adresse du Serveur"
                     value={serverName}
-                    style={{ minWidth: 100 }}
-                    onChangeText={(text) => changeServer(text)}
+                    style={{ minWidth: 200 }}
+                    onChangeText={text => {
+                        const filename = `${FileSystem.documentDirectory!}settings.json`;
+                        console.log(`Writing settings in ${filename}`);
+                        FileSystem.writeAsStringAsync(
+                            filename,
+                            JSON.stringify({
+                                server: text
+                            })
+                        );
+                        changeServer(text);
+                    }}
                     mode="outlined"
-                    // style={{
-                    //   borderColor: 'gray',
-                    //   borderWidth: 1,
-                    //   padding: 20,
-                    //   borderRadius: 5,
-                    // }}
                 />
             </View>
         </View>
@@ -52,6 +57,6 @@ export const Settings = connect(
 
 SettingsComponent.navigationOptions = ({ navigation }: NavigationParams) => {
     return {
-        headerTitle: `Settings`,
+        headerTitle: `Settings`
     };
 };

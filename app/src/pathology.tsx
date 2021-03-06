@@ -19,33 +19,21 @@ import { useState, useEffect } from "react";
 import { RootState } from "./store";
 import { getPatient } from "./store/patients/reducers";
 import { addInfo } from "./store/patients/actions";
+import { Info } from "./store/patients/types";
 import { writeInfo } from "./utils";
 
 interface PathologyProps {
     patient: Patient;
-    addInfo: (patient: Patient, pathology: Pathology) => void;
+    addInfo: typeof addInfo;
 }
 function PathologyComponent(props: PathologyProps) {
     const { addInfo, patient } = props;
 
-    if (patient.info === null) {
-        const info = {
-            questions: null,
-            pathology: { pathology: null, hasUlcer: false }
-        };
-        addInfo(patient, info);
-        return;
-    }
-    const pathology: string =
-        (patient.info &&
-            patient.info.pathology &&
-            patient.info.pathology.pathology) ||
-        "";
-    const hasUlcer: boolean =
-        (patient.info &&
-            patient.info.pathology &&
-            patient.info.pathology.hasUlcer) ||
-        false;
+    const pathology: Pathology = patient.info?.pathology || {
+        pathology: "",
+        hasUlcer: false
+    };
+
     const filename = infoUri(patient);
 
     const data = [
@@ -74,7 +62,7 @@ function PathologyComponent(props: PathologyProps) {
                     <ListItem
                         title={item}
                         renderIcon={() =>
-                            item === pathology ? (
+                            item === pathology.pathology ? (
                                 <Icon
                                     name="radio-button-checked"
                                     type="material"
@@ -87,20 +75,22 @@ function PathologyComponent(props: PathologyProps) {
                             )
                         }
                         onPress={() => {
-                            const pathology = {
-                                pathology: null,
-                                hasUlcer: false
+                            const newPathology = {
+                                pathology: item,
+                                hasUlcer: pathology.hasUlcer
                             };
-                            if (patient.info === null) {
-                                patient.info = {
-                                    pathology: pathology
-                                };
-                            }
-                            if (patient.info.pathology === null) {
-                                patient.info.pathology = pathology;
-                            }
-                            const info = { ...patient.info };
-                            info.pathology.pathology = item;
+                            const defaultInfo = {
+                                questions: null,
+                                inclusion: null,
+                                pathology: newPathology
+                            };
+                            const info: Info =
+                                patient.info !== null
+                                    ? {
+                                          ...patient.info,
+                                          pathology: newPathology
+                                      }
+                                    : defaultInfo;
                             writeInfo(info, filename).then(() => {
                                 addInfo(patient, info);
                             });
@@ -128,8 +118,19 @@ function PathologyComponent(props: PathologyProps) {
                         alignContent: "center"
                     }}
                     onPress={() => {
-                        const info = { ...patient.info };
-                        info.pathology.hasUlcer = !hasUlcer;
+                        const newPathology = {
+                            pathology: pathology.pathology,
+                            hasUlcer: !pathology.hasUlcer
+                        };
+                        const defaultInfo = {
+                            questions: null,
+                            inclusion: null,
+                            pathology: newPathology
+                        };
+                        const info: Info =
+                            patient.info !== null
+                                ? { ...patient.info, pathology: newPathology }
+                                : defaultInfo;
                         writeInfo(info, filename).then(() => {
                             addInfo(patient, info);
                         });
@@ -149,10 +150,24 @@ function PathologyComponent(props: PathologyProps) {
                         style={{
                             alignSelf: "center"
                         }}
-                        value={hasUlcer}
+                        value={pathology.hasUlcer}
                         onValueChange={value => {
-                            const info = { ...patient.info };
-                            info.pathology.hasUlcer = value;
+                            const newPathology = {
+                                pathology: pathology.pathology,
+                                hasUlcer: value
+                            };
+                            const defaultInfo = {
+                                questions: null,
+                                inclusion: null,
+                                pathology: newPathology
+                            };
+                            const info: Info =
+                                patient.info !== null
+                                    ? {
+                                          ...patient.info,
+                                          pathology: newPathology
+                                      }
+                                    : defaultInfo;
                             writeInfo(info, filename).then(() => {
                                 addInfo(patient, info);
                             });

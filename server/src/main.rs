@@ -1,11 +1,10 @@
-use std::io::Write;
-
 use actix_multipart::Multipart;
 use actix_web::{middleware, web, App, Error, HttpResponse, HttpServer, ResponseError};
 use futures::{StreamExt, TryStreamExt};
 use std::fmt;
 use std::fs;
 use std::fs::File;
+use std::io::Write;
 use std::path::Path;
 use std::{
     io,
@@ -104,11 +103,15 @@ async fn save_file(mut payload: Multipart) -> Result<HttpResponse, Error> {
     let filepath = format!("{}/{}", directory, filename);
     fs::create_dir_all(directory)?;
     tmpfile.seek(SeekFrom::Start(0))?;
-    let mut writer = fs::File::create(&filepath)?;
-    let perm = tmpfile.metadata()?.permissions();
-    io::copy(&mut tmpfile, &mut writer)?;
-    fs::set_permissions(filepath, perm)?;
-    Ok(HttpResponse::Ok().body("Ok").into())
+    if Path::new(&filepath).exists() && (filename.ends_with(".mp4") || filename.ends_with(".mov")) {
+        Ok(HttpResponse::Ok().body("Already exists").into())
+    } else {
+        let mut writer = fs::File::create(&filepath)?;
+        let perm = tmpfile.metadata()?.permissions();
+        io::copy(&mut tmpfile, &mut writer)?;
+        fs::set_permissions(filepath, perm)?;
+        Ok(HttpResponse::Ok().body("Ok").into())
+    }
 }
 
 fn index() -> HttpResponse {

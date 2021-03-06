@@ -32,6 +32,7 @@ export class Patient {
     id: Uuid;
     media: Media[];
     info: Info | null;
+    inclusion: Inclusion | null;
     uploaded: boolean;
     created: Date | null;
 
@@ -39,6 +40,7 @@ export class Patient {
         this.id = id;
         this.media = [];
         this.info = null;
+        this.inclusion = null;
         this.created = null;
         this.uploaded = false;
     }
@@ -78,6 +80,12 @@ export interface Media {
 export interface Info {
     pathology: Pathology | null;
     questions: Questions | null;
+    inclusion: Inclusion | null;
+}
+
+export interface Inclusion {
+    inclusion_number: string;
+    accepted: boolean;
 }
 
 export interface Questions {
@@ -106,9 +114,13 @@ export async function loadPatient(patientId: Uuid): Promise<Patient> {
 
     if (filenames.indexOf(infoFilename) !== -1) {
         const pathUri = infoUri(patient);
-        const content = await FileSystem.readAsStringAsync(pathUri);
-        const info = JSON.parse(content);
-        patient.info = info;
+        try {
+            const content = await FileSystem.readAsStringAsync(pathUri);
+            const info = JSON.parse(content);
+            patient.info = info;
+        } catch (e) {
+            console.error;
+        }
     }
 
     if (filenames.indexOf("media") != -1) {
@@ -141,6 +153,7 @@ export async function loadPatient(patientId: Uuid): Promise<Patient> {
 export const ADD_MEDIA = "ADD_MEDIA";
 export const ADD_PATHOLOGY = "ADD_PATHOLOGY";
 export const ADD_INFO = "ADD_INFO";
+export const ADD_INCLUSION = "ADD_INCLUSION";
 export const ADD_PATIENT = "ADD_PATIENT";
 export const SET_READY = "SET_READY";
 export const NAVIGATE_PATIENT = "NAVIGATE_PATIENT";
@@ -173,10 +186,6 @@ interface InfoAction extends BasePatientAction {
     type: typeof ADD_INFO;
     info: Info;
 }
-interface AddQuestionsAction extends BasePatientAction {
-    type: typeof ADD_QUESTIONS;
-    uri: string;
-}
 interface DeletedPatientAction extends BasePatientAction {
     type: typeof DELETED_PATIENT;
 }
@@ -185,12 +194,10 @@ interface UploadedPatientAction extends BasePatientAction {
 }
 
 export type PatientActionType =
-    | AddQuestionsAction
     | MediaAction
-    | QuestionsAction
     | DeletedPatientAction
     | UploadedPatientAction
-    | PathologyAction;
+    | InfoAction;
 
 export type PatientsActionType =
     | PatientActionType

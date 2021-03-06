@@ -21,20 +21,42 @@ import { RootState } from "./store";
 import { addInfo } from "./store/patients/actions";
 import { writeInfo } from "./utils";
 import { getPatient } from "./store/patients/reducers";
-import { Questions } from "./store/patients/types";
+import { Info, Questions } from "./store/patients/types";
 
 interface QuestionsProps {
-    addInfo: (patient: Patient, uri: string) => void;
+    addInfo: typeof addInfo;
     patient: Patient;
 }
 
-const QUESTIONS = [
-    { id: 0, question: "Démangeaisons ?", key: "itching" },
-    { id: 1, question: "Yeux collés au réveil ?", key: "morning_stuck_eyes" },
-    { id: 2, question: "Douleurs ?", key: "pain" },
-    { id: 3, question: "Baisse de vision ?", key: "impaired_vision" },
-    { id: 4, question: "Port de lentilles ?", key: "wears_lenses" },
-    { id: 5, question: "Bilatéral ?", key: "is_bilateral" }
+interface QuestionItem {
+    id: number;
+    question: string;
+    key: string;
+    value: boolean;
+}
+
+const QUESTIONS: QuestionItem[] = [
+    { id: 0, question: "Démangeaisons ?", key: "itching", value: false },
+    {
+        id: 1,
+        question: "Yeux collés au réveil ?",
+        key: "morning_stuck_eyes",
+        value: false
+    },
+    { id: 2, question: "Douleurs ?", key: "pain", value: false },
+    {
+        id: 3,
+        question: "Baisse de vision ?",
+        key: "impaired_vision",
+        value: false
+    },
+    {
+        id: 4,
+        question: "Port de lentilles ?",
+        key: "wears_lenses",
+        value: false
+    },
+    { id: 5, question: "Bilatéral ?", key: "is_bilateral", value: false }
 ];
 
 const defaultQuestions: Questions = {
@@ -51,20 +73,25 @@ function QuestionsComponent(props: QuestionsProps) {
     const filename = infoUri(patient);
     const navigation = useNavigation();
 
-    const renderItem = ({ item }) => {
+    const renderItem = ({ item }: { item: QuestionItem }) => {
         return (
             <View style={styles.item}>
                 <Text style={styles.text}>{item.question}</Text>
                 <Switch
-                    style={styles.switch}
+                    // style={styles.switch}
                     value={item.value}
                     onValueChange={value => {
-                        const info = patient.info
+                        const info: Info = patient.info
                             ? { ...patient.info }
                             : {
-                                  questions: { ...defaultQuestions },
-                                  pathology: null
+                                  questions: null,
+                                  pathology: null,
+                                  inclusion: null
                               };
+                        if (info.questions === null) {
+                            info.questions = { ...defaultQuestions };
+                        }
+                        console.log("value", value);
                         info.questions[item.key] = value;
                         writeInfo(info, filename).then(() => {
                             addInfo(patient, info);
