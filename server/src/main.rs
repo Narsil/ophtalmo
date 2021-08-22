@@ -45,7 +45,7 @@ struct Data {
 
 async fn receive(payload: &mut Multipart) -> Result<Data, Error> {
     let mut patient_bytes = Vec::<u8>::new();
-    let mut tmpfile = web::block(|| tempfile::tempfile()).await?;
+    let mut tmpfile = web::block(tempfile::tempfile).await?;
     let mut filename = "".to_string();
     let mut file_ok = false;
     let mut patient_ok = false;
@@ -104,13 +104,13 @@ async fn save_file(mut payload: Multipart) -> Result<HttpResponse, Error> {
     fs::create_dir_all(directory)?;
     tmpfile.seek(SeekFrom::Start(0))?;
     if Path::new(&filepath).exists() && (filename.ends_with(".mp4") || filename.ends_with(".mov")) {
-        Ok(HttpResponse::Ok().body("Already exists").into())
+        Ok(HttpResponse::Ok().body("Already exists"))
     } else {
         let mut writer = fs::File::create(&filepath)?;
         let perm = tmpfile.metadata()?.permissions();
         io::copy(&mut tmpfile, &mut writer)?;
         fs::set_permissions(filepath, perm)?;
-        Ok(HttpResponse::Ok().body("Ok").into())
+        Ok(HttpResponse::Ok().body("Ok"))
     }
 }
 
